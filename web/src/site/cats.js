@@ -11,7 +11,7 @@ export const SAMPLE_CATS = [
     public: true,
     tier: '299',
     animated: true,
-    voice: 'deep',
+    voice: 'sweet',
     bell: true,
     portrait: '/assets/site/cat_sanhua.jpg',
     coat: 'calico',

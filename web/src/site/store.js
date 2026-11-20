@@ -87,7 +87,7 @@ export function daysOnPlanet(cat) {
 }
 
 export function statusOf(cat) {
-  if (cat.generating) return { text: lang() === 'zh' ? '在来喵星的路上' : 'On the way to Cat Planet', out: false };
+  if (cat.generating) return { text: lang() === 'zh' ? '坐飞船来喵星的路上' : 'Flying to Cat Planet', out: false };
   const phase = phaseAt(cat.tier, new Date());
   const text = lang() === 'zh'
     ? (phase.out ? '出去玩了' : phase.text)

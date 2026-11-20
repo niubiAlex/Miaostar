@@ -26,8 +26,8 @@ function roomHtml(cat) {
     return `<div class="arriving">
       <img src="${cat.portrait}" alt="" />
       <p>${zh
-        ? `我们收到了${escapeHtml(name)}的照片和故事。<br />小屋动画会陆续接上，做好了这里会更新。`
-        : `We received ${escapeHtml(name)}’s photos and story.<br />Home animation will follow — this page will update when ready.`}</p>
+        ? `${escapeHtml(name)}正坐着小飞船，在来喵星的路上。<br />降落以后，它就会出现在这间小屋里。`
+        : `${escapeHtml(name)} is on a little spaceship, flying to Cat Planet.<br />Once they land, they will show up in this home.`}</p>
     </div>`;
   }
   if (!cat.animated) {
@@ -47,7 +47,7 @@ function roomHtml(cat) {
 function roomNote(cat) {
   const zh = lang() === 'zh';
   const name = escapeHtml(displayName(cat));
-  if (!cat.animated) return zh ? '小屋动画还在路上。' : 'Home animation is still on the way.';
+  if (!cat.animated) return zh ? `${name}的飞船还没降落，过一阵子就会住进来。` : `${name}’s spaceship has not landed yet — they will move in soon.`;
   if (cat.public) {
     return zh
       ? `${name}是大家的猫：谁来了都可以摸摸它、叫它、喂它。饭点它会等着有人来。`

@@ -17,7 +17,7 @@ const SAMPLE = {
     public: true,
     tier: '299',
     animated: true,
-    voice: 'deep',
+    voice: 'sweet',
     portrait: '/assets/site/cat_sanhua.jpg',
     coat: 'calico',
     planetDay: '2025-09-12',
