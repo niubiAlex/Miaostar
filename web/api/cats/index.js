@@ -1,11 +1,11 @@
 import {
-  RESERVED, allRemoteCats, currentUser, readBody, sampleCats, send, slugExists, writeJson,
+  RESERVED, allRemoteCats, currentUser, publicCat, readBody, sampleCats, send, slugExists, writeJson,
 } from '../_lib.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
     const remote = await allRemoteCats();
-    return send(res, { cats: [...remote, ...sampleCats()] });
+    return send(res, { cats: [...remote.map(publicCat), ...sampleCats()] });
   }
 
   if (req.method !== 'POST') return send(res, { error: 'Method not allowed' }, 405);
@@ -41,5 +41,5 @@ export default async function handler(req, res) {
     createdAt: new Date().toISOString(),
   };
   await writeJson(`cats/${slug}.json`, cat);
-  return send(res, { cat }, 201);
+  return send(res, { cat: publicCat(cat) }, 201);
 }

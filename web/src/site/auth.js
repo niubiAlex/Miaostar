@@ -11,6 +11,9 @@ const SERVER_ERRORS = {
   'Name required': 'errName',
   'Password must be at least 6 characters': 'errPassword',
   'Address already taken': 'slugTaken',
+  'Address reserved': 'slugTaken',
+  'Invalid address': 'errSlug',
+  'Cat name required': 'errCatName',
   'Please log in first': 'needLogin',
 };
 const localError = (message, fallbackKey) => t(SERVER_ERRORS[message] ?? fallbackKey);

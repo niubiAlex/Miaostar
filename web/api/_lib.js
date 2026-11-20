@@ -125,6 +125,13 @@ export async function allRemoteCats() {
   return cats;
 }
 
+// Never send the owner's email to the browser; ownerId is enough to know who owns it.
+export function publicCat(cat) {
+  if (!cat) return cat;
+  const { ownerEmail, ...rest } = cat;
+  return rest;
+}
+
 export function sampleCats() {
   return [SAMPLE.xiaowu];
 }

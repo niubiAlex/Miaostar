@@ -1,4 +1,4 @@
-import { readJson, sampleCats, send } from '../_lib.js';
+import { publicCat, readJson, sampleCats, send } from '../_lib.js';
 
 export default async function handler(req, res) {
   const slug = String(req.query?.slug || '').trim().toLowerCase();
@@ -6,5 +6,5 @@ export default async function handler(req, res) {
   const sample = sampleCats().find((cat) => cat.slug === slug);
   if (sample) return send(res, { cat: sample });
   const cat = await readJson(`cats/${slug}.json`);
-  return send(res, { cat: cat || null }, cat ? 200 : 404);
+  return send(res, { cat: publicCat(cat) || null }, cat ? 200 : 404);
 }
