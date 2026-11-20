@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>使用说明 · 喵星 Miaostar</title>
+    <title>Terms · Cat Planet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -12,21 +12,37 @@
   <body>
     <header id="siteHeader" class="site-header"></header>
     <main class="sheet" style="margin-top: 32px">
-      <h2>使用说明</h2>
-      <p class="lead">喵星是一个纪念猫咪的地方，请温柔使用。</p>
-      <ul class="plain">
-        <li>请只上传你有权使用的照片，并确认你愿意以纪念的方式展示这只猫。</li>
-        <li>请不要上传他人隐私、侵权内容，或恶意、骚扰性留言。</li>
-        <li>站点里的画风与动画为创作内容；请勿未经允许用于商业用途。</li>
-        <li>当前为早期公开版：部分功能仍在完善，数据主要存在你的浏览器中。</li>
-        <li>我们可能调整功能与展示方式；重要变更会尽量在「关于」页说明。</li>
-      </ul>
-      <p>继续使用本站，即表示你理解并同意上述说明。</p>
-      <p class="small">最后更新：2026-11-20</p>
+      <div data-lang="en">
+        <h2>Terms</h2>
+        <p class="lead">Cat Planet is a place to remember cats. Please use it gently.</p>
+        <ul class="plain">
+          <li>Only upload photos you have the right to use, and that you are comfortable showing as a memorial.</li>
+          <li>Do not post other people’s private information, infringing content, or abusive messages.</li>
+          <li>The illustrations and animations are original work; please do not use them commercially without permission.</li>
+          <li>This is an early public version. Some features are still being built.</li>
+          <li>We may change features or presentation; important changes will be noted on the About page.</li>
+        </ul>
+        <p>By continuing to use the site, you understand and agree to these notes.</p>
+        <p class="small">Last updated: 2026-11-20</p>
+      </div>
+      <div data-lang="zh">
+        <h2>使用说明</h2>
+        <p class="lead">喵星是一个纪念猫咪的地方，请温柔使用。</p>
+        <ul class="plain">
+          <li>请只上传你有权使用的照片，并确认你愿意以纪念的方式展示这只猫。</li>
+          <li>请不要上传他人隐私、侵权内容，或恶意、骚扰性留言。</li>
+          <li>站点里的画风与动画为原创内容；请勿未经允许用于商业用途。</li>
+          <li>当前为早期公开版，部分功能仍在完善。</li>
+          <li>我们可能调整功能与展示方式；重要变更会在「关于」页说明。</li>
+        </ul>
+        <p>继续使用本站，即表示你理解并同意上述说明。</p>
+        <p class="small">最后更新：2026-11-20</p>
+      </div>
     </main>
     <footer></footer>
     <script type="module">
-      import { renderHeader } from '/src/site/store.js';
+      import { ensureAuth, renderHeader } from '/src/site/store.js';
+      await ensureAuth();
       renderHeader();
     </script>
   </body>

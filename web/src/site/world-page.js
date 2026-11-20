@@ -17,13 +17,10 @@ await runLoading({ minMs: 1800 });
 
 // Static HTML was English-only; header uses i18n — paint the rest so one language stays consistent.
 function paintStaticCopy() {
-  const zh = lang() === 'zh';
-  document.documentElement.lang = zh ? 'zh-CN' : 'en';
-
   const plaza = document.querySelector('.place-plaza');
   if (plaza) {
-    plaza.querySelector('h1').textContent = zh ? BRAND.zh : BRAND.en;
-    plaza.querySelector('.brand-zh').textContent = zh ? BRAND.en : BRAND.zh;
+    plaza.querySelector('h1').textContent = BRAND[lang()];
+    plaza.querySelector('.brand-zh')?.remove();
     plaza.querySelector('.lead-line').textContent = t('tagline');
     document.getElementById('exploreTown').textContent = t('explore');
     const send = plaza.querySelector('a.button.ghost');
@@ -316,13 +313,13 @@ const pathOf = (target) => (target.kind === 'house' ? `/house/${target.number}` 
 
 function describe(target) {
   if (target.kind !== 'house') {
-    document.title = 'Cat Planet · 喵星';
+    document.title = BRAND[lang()];
     return;
   }
   const cat = residents[target.number - 1];
   document.title = cat
-    ? `${displayName(cat)} · Cat Planet`
-    : `Cat Town No. ${target.number} · Cat Planet`;
+    ? `${displayName(cat)} · ${BRAND[lang()]}`
+    : (lang() === 'zh' ? `喵城镇 ${target.number} 号 · 喵星` : `Cat Town No. ${target.number} · Cat Planet`);
   const zh = lang() === 'zh';
   document.getElementById('houseName').textContent = cat
     ? (zh ? `${target.number} 号 · ${displayName(cat)}` : `No. ${target.number} · ${displayName(cat)}`)

@@ -1,5 +1,19 @@
 // Server session auth (email + password). Cookie is HttpOnly from /api/auth/*.
+import { t } from './i18n.js';
+
 let cached = undefined;
+
+// API errors are English; show them in the reader's language.
+const SERVER_ERRORS = {
+  'Email or password incorrect': 'errBadLogin',
+  'Email already registered': 'errEmailTaken',
+  'Invalid email': 'errEmail',
+  'Name required': 'errName',
+  'Password must be at least 6 characters': 'errPassword',
+  'Address already taken': 'slugTaken',
+  'Please log in first': 'needLogin',
+};
+const localError = (message, fallbackKey) => t(SERVER_ERRORS[message] ?? fallbackKey);
 
 export async function fetchMe() {
   try {
@@ -24,7 +38,7 @@ export async function register({ email, password, name }) {
     body: JSON.stringify({ email, password, name }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Sign up failed');
+  if (!response.ok) throw new Error(localError(data.error, 'errSignup'));
   cached = data.user;
   return data.user;
 }
@@ -37,7 +51,7 @@ export async function login({ email, password }) {
     body: JSON.stringify({ email, password }),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Log in failed');
+  if (!response.ok) throw new Error(localError(data.error, 'errLogin'));
   cached = data.user;
   return data.user;
 }
@@ -60,7 +74,7 @@ export async function createCat(payload) {
     body: JSON.stringify(payload),
   });
   const data = await response.json();
-  if (!response.ok) throw new Error(data.error || 'Could not create cat');
+  if (!response.ok) throw new Error(localError(data.error, 'errCreate'));
   return data.cat;
 }
 
@@ -89,15 +103,15 @@ export function openAuthModal({ mode = 'login' } = {}) {
     modal.setAttribute('aria-modal', 'true');
     modal.innerHTML = `
       <div class="auth-card">
-        <button type="button" class="auth-close" aria-label="Close">×</button>
+        <button type="button" class="auth-close" aria-label="${t('close')}">×</button>
         <h2 data-title></h2>
         <p class="lead" data-lead></p>
         <form id="authForm" class="form">
-          <label><span data-label-name>Your name</span><input name="name" maxlength="32" required /></label>
-          <label><span data-label-email>Email</span><input name="email" type="email" required /></label>
-          <label><span data-label-password>Password</span><input name="password" type="password" minlength="6" required /></label>
+          <label><span>${t('displayName')}</span><input name="name" maxlength="32" required /></label>
+          <label><span>${t('email')}</span><input name="email" type="email" required /></label>
+          <label><span>${t('password')}</span><input name="password" type="password" minlength="6" required /></label>
           <p class="error" data-error hidden></p>
-          <button type="submit" class="button" data-submit>Continue</button>
+          <button type="submit" class="button" data-submit></button>
         </form>
         <p class="hint"><button type="button" class="linkish" data-switch></button></p>
       </div>`;
@@ -112,14 +126,12 @@ export function openAuthModal({ mode = 'login' } = {}) {
 
     const paint = () => {
       const isLogin = current === 'login';
-      title.textContent = isLogin ? 'Log in to Cat Planet' : 'Create your Cat Planet account';
-      lead.textContent = isLogin
-        ? 'So we know which cats are yours.'
-        : 'One account — every cat you send is linked to you.';
+      title.textContent = t(isLogin ? 'loginTitle' : 'signupTitle');
+      lead.textContent = t(isLogin ? 'loginLead' : 'signupLead');
       nameField.hidden = isLogin;
       modal.querySelector('[name=name]').required = !isLogin;
-      switchBtn.textContent = isLogin ? 'Need an account? Sign up' : 'Already have an account? Log in';
-      modal.querySelector('[data-submit]').textContent = isLogin ? 'Log in' : 'Sign up';
+      switchBtn.textContent = t(isLogin ? 'toSignup' : 'toLogin');
+      modal.querySelector('[data-submit]').textContent = t(isLogin ? 'login' : 'signUp');
       error.hidden = true;
     };
     paint();

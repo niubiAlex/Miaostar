@@ -1,6 +1,6 @@
 // Cat page: room first, story second, dossier third.
 import { getCat } from './auth.js';
-import { lang } from './i18n.js';
+import { brand, lang } from './i18n.js';
 import {
   addressOf, daysOnPlanet, displayName, displayOwner, ensureAuth, escapeHtml, findCat, formatDate,
   isOwner, leaveMessage, lightCandle, me, renderHeader, statusOf,
@@ -30,10 +30,10 @@ function roomHtml(cat, owner) {
     </div>
     <p class="room-note">${zh ? '小屋动画还在路上' : 'Home animation is still on the way'}</p>`;
   }
-  const params = new URLSearchParams({ tier: cat.tier, embed: '1' });
+  const params = new URLSearchParams({ tier: cat.tier, embed: '1', lang: zh ? 'zh' : 'en' });
   if (cat.assets) params.set('cat', cat.assets);
   if (!owner) params.set('visitor', '1');
-  return `<iframe class="room-frame ${owner ? 'owner' : ''}" src="/home.html?${params}" title="${escapeHtml(name)} home"></iframe>
+  return `<iframe class="room-frame ${owner ? 'owner' : ''}" src="/home.html?${params}" title="${escapeHtml(name)}${zh ? ' 的小屋' : ' · home'}"></iframe>
     <p class="room-note">${owner
       ? (zh ? '这是你的猫，可以摸摸它、叫它、喂它。' : 'This is your cat — you can pet, call, and feed it.')
       : (zh
@@ -76,7 +76,7 @@ function render(cat) {
   }
   const name = displayName(cat);
   const owner = displayOwner(cat);
-  document.title = `${name} · ${owner} · Cat Planet`;
+  document.title = `${name} · ${brand()}`;
   const owned = isOwner(cat);
   const address = addressOf(cat);
   const backHref = address?.href || '/';

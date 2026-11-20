@@ -2,7 +2,7 @@
 // 平时它在屋里溜达：溜达片段里它是真的在画面里走一段（镜头不动，路线带弯），播完后网页把它的位置挪到终点。
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=4';
-import { MEALS, dayKey, phaseAt, skyAt } from './schedule.js?v=5';
+import { MEALS, MEALS_EN, dayKey, phaseAt, skyAt } from './schedule.js?v=6';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
 const STAGE = { width: 576, height: 720 };
@@ -34,6 +34,9 @@ const TURN_RATE = 1.3; // 转身片段播快一点，原速太拖
 
 const params = new URLSearchParams(location.search);
 const FAST = params.has('fast'); // 检查脚本用：睡得短、出门短
+const ZH = (params.get('lang') ?? localStorage.getItem('catplanet:lang') ?? 'en') === 'zh';
+const L = (zh, en) => (ZH ? zh : en);
+const mealName = (meal) => (ZH ? MEALS : MEALS_EN)[meal];
 // 三个档位：免费只会睡觉；¥99 醒着陪你，待在屋子中间；¥299 全套，满屋走、出门。
 // activities 是这一档自己会做、也能让它去做的事；idles 是待着时的小动作和权重。
 const TIERS = {
@@ -391,7 +394,9 @@ const ACTIVITIES = {
     if (wishPending()) return hideProp('bowl');
     const { meal } = phaseAt(TIER, clock());
     const isMeal = Boolean(meal) && mealStore.getItem(fedKey(meal)) === null;
-    say(isMeal ? pick([`${MEALS[meal]}来啦`, '终于开饭了', '好香']) : pick(['加个餐', '嘿嘿，零食']));
+    say(isMeal
+      ? pick(L([`${MEALS[meal]}来啦`, '终于开饭了', '好香'], [`${mealName(meal)} time!`, 'Finally, food', 'Smells good']))
+      : pick(L(['加个餐', '嘿嘿，零食'], ['A little snack', 'Treats!'])));
     await playClip('eat_bowl');
     if (isMeal) mealStore.setItem(fedKey(meal), String(Date.now()));
     elements.bowl.src = 'assets/home45/bowl_empty.png';
@@ -403,7 +408,7 @@ const ACTIVITIES = {
     hideAllProps();
     await face('fl');
     if (wishPending()) return;
-    say(pick(['球！', '看我的', '来玩呀']));
+    say(pick(L(['球！', '看我的', '来玩呀'], ['Ball!', 'Watch this', 'Play with me'])));
     await playClip('play_ball');
     cat.tiredness = Math.min(1, cat.tiredness + 0.08);
   },
@@ -412,7 +417,7 @@ const ACTIVITIES = {
     if (!(await goUse('bed'))) return;
     await face('fl');
     if (wishPending()) return hideProp('bed');
-    say(pick(['困了…', '睡一会儿', '呼…']));
+    say(pick(L(['困了…', '睡一会儿', '呼…'], ['Sleepy…', 'Just a nap', 'Hmm…'])));
     await playClip('settle_fl');
     cat.asleep = true;
     cat.facing = 'fl';
@@ -424,7 +429,7 @@ const ACTIVITIES = {
     if (!(await goUse('board'))) return;
     await face('fl');
     if (wishPending()) return hideProp('board');
-    say(pick(['磨磨爪子', '嚓嚓嚓', '爪子痒了']));
+    say(pick(L(['磨磨爪子', '嚓嚓嚓', '爪子痒了'], ['Sharpening claws', 'Scratch scratch', 'Itchy paws'])));
     await playClip('scratch');
     hideProp('board');
   },
@@ -433,12 +438,12 @@ const ACTIVITIES = {
     hideAllProps();
     // 最后一段要斜朝后正对着门洞走，所以先走另一个斜向。
     if (!(await walkTo(DOOR, { first: 'bl' })) || wishPending()) return;
-    say(pick(['出去找朋友玩～', '出门逛逛', '我出去一下', '出去上个厕所']));
+    say(pick(L(['出去找朋友玩～', '出门逛逛', '我出去一下', '出去上个厕所'], ['Off to see friends~', 'Going for a walk', 'Back in a bit', 'Bathroom break'])));
     elements.doorCover.hidden = false;
     await walkTo(OUTSIDE, { first: 'br', committed: true });
     elements.cat.style.visibility = 'hidden';
     elements.doorCover.hidden = true;
-    elements.away.textContent = '出门玩去了';
+    elements.away.textContent = L('出门玩去了', 'Gone out to play');
     elements.away.hidden = false;
     cat.out = true;
     cat.returnAt = performance.now() + (FAST ? 3000 : random(15000, 30000));
@@ -467,7 +472,7 @@ async function waitForMeal(phase) {
   if (wishPending()) return;
   cat.hungryLoops += 1;
   if (cat.hungryLoops % 3 === 1) {
-    say(pick([`喵～${MEALS[phase.meal]}呢？`, '碗空空的…', '饿了，喵']));
+    say(pick(L([`喵～${MEALS[phase.meal]}呢？`, '碗空空的…', '饿了，喵'], [`Meow~ where’s ${mealName(phase.meal)}?`, 'The bowl is empty…', 'Hungry, meow'])));
     await playClip('called');
   } else {
     await playClip('stand_idle', { calm: true });
@@ -479,7 +484,7 @@ async function vanish(phase) {
   elements.cat.classList.add('gone');
   await wait(1000);
   elements.cat.style.visibility = 'hidden';
-  elements.away.textContent = '出去玩了'; // 几点回来写在左上角的状态里
+  elements.away.textContent = L('出去玩了', 'Out playing'); // 几点回来写在左上角的状态里
   elements.away.hidden = false;
   cat.out = true;
 }
@@ -500,7 +505,7 @@ async function reappear() {
 async function goRoaming(phase) {
   await ACTIVITIES.out();
   if (!cat.out) return;
-  elements.away.textContent = '出去玩了'; // 几点回来写在左上角的状态里
+  elements.away.textContent = L('出去玩了', 'Out playing'); // 几点回来写在左上角的状态里
   cat.returnAt = Infinity;
 }
 
@@ -520,7 +525,7 @@ async function comeBack() {
   elements.doorCover.hidden = true;
   cat.out = false;
   cat.tiredness = Math.min(1, cat.tiredness + 0.25);
-  say(pick(['我回来啦', '外面真好玩', '回家啦']));
+  say(pick(L(['我回来啦', '外面真好玩', '回家啦'], ['I’m back', 'Outside was fun', 'Home again'])));
 }
 
 async function react(kind) {
@@ -535,7 +540,7 @@ async function react(kind) {
   // 免费档只会睡觉：叫它也不醒，耳朵动一动。
   if (SLEEPS_ONLY) {
     if (kind === 'pet') hearts();
-    say(kind === 'pet' ? '呼噜呼噜…' : pick(['呼…睡得正香', 'zzz…']));
+    say(kind === 'pet' ? L('呼噜呼噜…', 'Purr purr…') : pick(L(['呼…睡得正香', 'zzz…'], ['Fast asleep…', 'zzz…'])));
     await playClip('sleep_idle', { calm: true });
     return;
   }
@@ -543,19 +548,19 @@ async function react(kind) {
     if (cat.asleep) {
       // 睡着被摸不醒，只是更安心。
       hearts();
-      say('呼噜呼噜…');
+      say(L('呼噜呼噜…', 'Purr purr…'));
       await playClip('sleep_idle', { calm: true });
       return;
     }
     await face('fl');
     hearts();
-    say(pick(['喵～', '舒服', '再摸摸']));
+    say(pick(L(['喵～', '舒服', '再摸摸'], ['Meow~', 'Nice', 'More, please'])));
     await playClip('petted');
     return;
   }
   // 被叫：睡着就醒过来，背对着就转过来，然后看向你应一声。
   await face('fl');
-  say(pick(['喵？', '喵～', '在呢']));
+  say(pick(L(['喵？', '喵～', '在呢'], ['Meow?', 'Meow~', 'I’m here'])));
   await playClip('called');
 }
 
@@ -578,8 +583,10 @@ function applySky() {
 function showStatus(phase) {
   const time = clock().toTimeString().slice(0, 5);
   const sky = skyAt(clock());
-  const text = mealPending(phase) ? `等${params.has('visitor') ? '主人' : '你'}喂${MEALS[phase.meal]}` : phase.text;
-  elements.status.textContent = `${time} ${sky.label} · ${text}`;
+  const text = mealPending(phase)
+    ? L(`等${params.has('visitor') ? '主人' : '你'}喂${MEALS[phase.meal]}`, `Waiting for ${mealName(phase.meal)}`)
+    : L(phase.text, phase.textEn);
+  elements.status.textContent = `${time} ${L(sky.label, sky.labelEn)} · ${text}`;
   applySky();
 }
 
@@ -646,14 +653,29 @@ function request(kind, value) {
   interrupt();
 }
 
+function paintCopy() {
+  document.documentElement.lang = ZH ? 'zh-CN' : 'en';
+  document.title = L('喵星 · 它的小屋', 'Cat Planet · Their home');
+  elements.catHit.setAttribute('aria-label', L('摸摸头', 'Pet'));
+  elements.loading.textContent = L('正在加载', 'Loading');
+  elements.callButton.textContent = L('叫它', 'Call');
+  const hint = document.querySelector('.hint');
+  if (hint) hint.textContent = L('点它摸摸头', 'Tap to pet');
+  const asksLabel = document.querySelector('.asks > span');
+  if (asksLabel) asksLabel.textContent = L('让它去', 'Ask to');
+  const asks = { eat: ['吃饭', 'Eat'], play: ['玩球', 'Play'], sleep: ['睡觉', 'Sleep'], scratch: ['抓板', 'Scratch'], out: ['出门', 'Go out'] };
+  for (const button of document.querySelectorAll('[data-ask]')) button.textContent = L(...asks[button.dataset.ask]);
+}
+
 async function start() {
+  paintCopy();
   layoutRoom();
   [motion, strolls] = await Promise.all([
     // 步速是从这只猫的走路片段量出来的，只有 ¥299 档会走路。
     TIER === '299' ? fetch(`${CAT_ASSETS}/motion.json`).then((response) => response.json()) : null,
     fetch('assets/home45/extra_poses.json').then((response) => response.json()),
     player.preload(CLIP_NAMES.map((name) => ({ file: clipFile(name) })), (done, total) => {
-      elements.loading.textContent = `正在加载 ${done}/${total}`;
+      elements.loading.textContent = `${L('正在加载', 'Loading')} ${done}/${total}`;
     }),
   ]);
   elements.loading.hidden = true;
@@ -663,7 +685,7 @@ async function start() {
   document.body.classList.toggle('visitor', params.has('visitor'));
   if (!params.has('visitor')) elements.catHit.addEventListener('click', () => request('reaction', 'pet'));
   elements.callButton.addEventListener('click', () => {
-    if (cat.out) say(SLEEPS_ONLY ? '它在外面玩，早上回来' : '听见啦，这就回来', { x: 470, y: 250 });
+    if (cat.out) say(SLEEPS_ONLY ? L('它在外面玩，早上回来', 'Out playing, back in the morning') : L('听见啦，这就回来', 'Heard you, coming home'), { x: 470, y: 250 });
     request('reaction', 'call');
   });
   for (const button of document.querySelectorAll('[data-ask]')) {
@@ -687,7 +709,7 @@ async function start() {
     cat.out = true;
     cat.returnAt = Infinity;
     elements.cat.style.visibility = 'hidden';
-    elements.away.textContent = '出去玩了'; // 几点回来写在左上角的状态里
+    elements.away.textContent = L('出去玩了', 'Out playing'); // 几点回来写在左上角的状态里
     elements.away.hidden = false;
   } else if (phase.sleep === 'deep' || phase.sleep === 'nap' && Math.random() < 0.7) {
     cat.asleep = true;
@@ -703,6 +725,6 @@ async function start() {
 
 start().catch((error) => {
   elements.loading.hidden = false;
-  elements.loading.textContent = `出错了：${error.message}`;
+  elements.loading.textContent = `${L('出错了：', 'Something went wrong: ')}${error.message}`;
   throw error;
 });

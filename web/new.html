@@ -13,53 +13,71 @@
     <header id="siteHeader" class="site-header"></header>
 
     <main class="sheet" style="margin-top: 32px">
-      <h2>Send a cat to Cat Planet</h2>
-      <p class="lead">Free. Leave photos and a story first. Home animation will follow — we will update the page when it is ready.</p>
+      <h2><span data-lang="en">Send a cat to Cat Planet</span><span data-lang="zh">送它来喵星</span></h2>
+      <p class="lead">
+        <span data-lang="en">Free. Leave photos and a story first. Home animation will follow — we will update the page when it is ready.</span>
+        <span data-lang="zh">免费。先留下照片和故事，小屋动画会陆续接上，做好了这里会更新。</span>
+      </p>
 
       <div id="loginGate" class="login-gate">
-        <p>Please log in first — so we know which cats are yours.</p>
+        <p>
+          <span data-lang="en">Please log in first — so we know which cats are yours.</span>
+          <span data-lang="zh">请先登录，我们才知道哪只猫是你的。</span>
+        </p>
         <div class="actions">
-          <button type="button" class="button" id="gateLogin">Log in</button>
-          <button type="button" class="button ghost" id="gateSignup">Sign up</button>
+          <button type="button" class="button" id="gateLogin"><span data-lang="en">Log in</span><span data-lang="zh">登录</span></button>
+          <button type="button" class="button ghost" id="gateSignup"><span data-lang="en">Sign up</span><span data-lang="zh">注册</span></button>
         </div>
       </div>
 
       <form id="form" class="form" novalidate hidden>
         <label>
-          <span>Photos (1–5)</span>
+          <span><span data-lang="en">Photos (1–5)</span><span data-lang="zh">照片（1–5 张）</span></span>
           <input type="file" name="photos" accept="image/*" multiple />
-          <span class="hint">Front, side, and full body if you can. Photos stay in your browser for now when previewing.</span>
+          <span class="hint">
+            <span data-lang="en">Front, side, and full body if you can. We draw from them.</span>
+            <span data-lang="zh">正面、侧面、全身都有最好，我们照着它的样子画。</span>
+          </span>
           <div id="photoPreview" class="photos"></div>
         </label>
 
         <div class="row">
-          <label><span>Cat’s name</span><input name="name" maxlength="12" placeholder="e.g. Xiaowu" /></label>
-          <label><span>Your name</span><input name="owner" maxlength="32" readonly /></label>
+          <label><span><span data-lang="en">Cat’s name</span><span data-lang="zh">猫的名字</span></span><input name="name" maxlength="12" placeholder="Xiaowu" /></label>
+          <label><span><span data-lang="en">Your name</span><span data-lang="zh">你的名字</span></span><input name="owner" maxlength="32" readonly /></label>
         </div>
 
         <label>
-          <span>Homepage address</span>
+          <span><span data-lang="en">Homepage address</span><span data-lang="zh">主页地址</span></span>
           <div class="slug-input"><span>catplanet.online/</span><input name="slug" maxlength="24" placeholder="xiaowu" /></div>
-          <span class="hint" id="slugStatus">Suggested from the name — change it if you like. If taken, we will tell you.</span>
+          <span class="hint" id="slugStatus">
+            <span data-lang="en">Suggested from the name — change it if you like. If taken, we will tell you.</span>
+            <span data-lang="zh">根据名字自动生成，也可以自己改。被占用了会提醒你。</span>
+          </span>
         </label>
 
         <div class="row">
-          <label><span>Birthday (optional)</span><input type="date" name="birthday" /></label>
-          <label><span>Came home (optional)</span><input type="date" name="homeDay" /></label>
-          <label><span>Arrived on Cat Planet</span><input type="date" name="planetDay" /></label>
+          <label><span><span data-lang="en">Birthday (optional)</span><span data-lang="zh">生日（可不填）</span></span><input type="date" name="birthday" /></label>
+          <label><span><span data-lang="en">Came home (optional)</span><span data-lang="zh">来到家里（可不填）</span></span><input type="date" name="homeDay" /></label>
+          <label><span><span data-lang="en">Arrived on Cat Planet</span><span data-lang="zh">来到喵星的日子</span></span><input type="date" name="planetDay" /></label>
         </div>
 
-        <label><span>Coat (optional)</span><input name="coat" maxlength="20" placeholder="e.g. calico, orange tabby" /></label>
+        <label><span><span data-lang="en">Coat (optional)</span><span data-lang="zh">花色（可不填）</span></span><input name="coat" maxlength="20" placeholder="calico / 三花" /></label>
 
         <label>
-          <span>What you want to say</span>
-          <textarea name="story" rows="6" maxlength="2000" placeholder="How you met, little habits, what you miss…"></textarea>
-          <span class="hint">Blank line starts a new paragraph.</span>
+          <span><span data-lang="en">What you want to say</span><span data-lang="zh">想对它说的话</span></span>
+          <textarea name="story" rows="6" maxlength="2000"></textarea>
+          <span class="hint">
+            <span data-lang="en">How you met, little habits, what you miss… A blank line starts a new paragraph.</span>
+            <span data-lang="zh">怎么遇见的、小习惯、你想念的地方……空一行就是新的一段。</span>
+          </span>
         </label>
 
-        <p class="hint">By submitting you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a> notes.</p>
+        <p class="hint">
+          <span data-lang="en">By submitting you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a> notes.</span>
+          <span data-lang="zh">提交即表示你同意<a href="/terms">使用说明</a>和<a href="/privacy">隐私说明</a>。</span>
+        </p>
         <p id="error" class="error" hidden></p>
-        <button type="submit" class="button">Send to Cat Planet</button>
+        <button type="submit" class="button"><span data-lang="en">Send to Cat Planet</span><span data-lang="zh">送它来喵星</span></button>
       </form>
     </main>
 

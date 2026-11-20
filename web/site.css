@@ -1093,17 +1093,15 @@ textarea {
 
 .world-view[data-sky='night'] .world-sky {
   opacity: 1;
-  background: linear-gradient(180deg, rgba(20, 30, 70, 0.42), rgba(8, 12, 36, 0.5));
+  background: linear-gradient(180deg, rgba(20, 30, 70, 0.5), rgba(8, 12, 36, 0.58));
 }
 
-.world-view[data-sky='dusk'] .world-canvas,
-.world-view[data-sky='night'] .world-canvas {
-  filter: saturate(0.9);
+/* Static pages carry both languages; only the active one shows. */
+html[lang^='zh'] [data-lang='en'],
+html:not([lang^='zh']) [data-lang='zh'] {
+  display: none !important;
 }
 
-.world-view[data-sky='night'] .world-canvas {
-  filter: brightness(0.72) saturate(0.8);
-}
 
 .world-view.dragging {
   cursor: grabbing;

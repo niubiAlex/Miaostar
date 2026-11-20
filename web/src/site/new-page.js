@@ -73,7 +73,7 @@ async function refreshSlugHint() {
   const result = await checkSlug(slug);
   if (result.taken) {
     const alt = nextSlug(slugifyName(form.name.value || slug), (candidate) => candidate === slug);
-    hint.textContent = `${tr('slugTaken')} Try /${alt}`;
+    hint.textContent = `${tr('slugTaken')} ${tr('slugTry', alt)}`;
     hint.dataset.state = 'bad';
   } else {
     hint.textContent = tr('slugSuggest');
@@ -83,12 +83,12 @@ async function refreshSlugHint() {
 
 async function problem(data) {
   if (!me()) return tr('needLogin');
-  if (photos.length === 0) return 'Please upload at least one photo';
-  if (!data.name) return 'Please enter the cat’s name';
-  if (!validSlug(data.slug) || RESERVED.has(data.slug)) return 'Address: 2–24 lowercase letters, numbers, hyphens';
+  if (photos.length === 0) return tr('errPhoto');
+  if (!data.name) return tr('errCatName');
+  if (!validSlug(data.slug) || RESERVED.has(data.slug)) return tr('errSlug');
   const result = await checkSlug(data.slug);
   if (result.taken) return tr('slugTaken');
-  if (!data.planetDay) return 'Please choose the day they arrived on Cat Planet';
+  if (!data.planetDay) return tr('errPlanetDay');
   return null;
 }
 
@@ -107,8 +107,8 @@ form.addEventListener('submit', async (event) => {
   if (message) return;
 
   const timeline = [
-    data.homeDay && { date: data.homeDay, text: 'Came home' },
-    { date: data.planetDay, text: 'Arrived on Cat Planet' },
+    data.homeDay && { date: data.homeDay, text: tr('timelineHome') },
+    { date: data.planetDay, text: tr('timelineArrived') },
   ].filter(Boolean);
 
   try {

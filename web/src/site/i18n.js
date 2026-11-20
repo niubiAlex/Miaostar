@@ -41,6 +41,27 @@ const STRINGS = {
     loadingHint: 'Warming the clouds',
     loginTitle: 'Log in to Cat Planet',
     loginLead: 'So we know which cats are yours.',
+    signupTitle: 'Create your Cat Planet account',
+    signupLead: 'One account — every cat you send is linked to you.',
+    toSignup: 'Need an account? Sign up',
+    toLogin: 'Already have an account? Log in',
+    errBadLogin: 'Email or password is incorrect.',
+    errEmailTaken: 'This email is already registered. Try logging in.',
+    errEmail: 'Please enter a valid email.',
+    errName: 'Please enter your name.',
+    errPassword: 'Password must be at least 6 characters.',
+    errSignup: 'Sign up failed. Please try again.',
+    errLogin: 'Log in failed. Please try again.',
+    errCreate: 'Could not send the cat. Please try again.',
+    errPhoto: 'Please upload at least one photo.',
+    errCatName: 'Please enter the cat’s name.',
+    errSlug: 'Address: 2–24 lowercase letters, numbers, or hyphens.',
+    errPlanetDay: 'Please choose the day they arrived on Cat Planet.',
+    slugTry: (alt) => `Try /${alt}`,
+    timelineHome: 'Came home',
+    timelineArrived: 'Arrived on Cat Planet',
+    close: 'Close',
+    visit: 'Visit',
     email: 'Email',
     password: 'Password',
     displayName: 'Your name',
@@ -95,6 +116,27 @@ const STRINGS = {
     loadingHint: '云层正在散开',
     loginTitle: '登录喵星',
     loginLead: '登录后我们才知道哪只猫是你的。',
+    signupTitle: '注册喵星账号',
+    signupLead: '一个账号，你送来的每只猫都记在你名下。',
+    toSignup: '还没有账号？注册',
+    toLogin: '已有账号？登录',
+    errBadLogin: '邮箱或密码不对。',
+    errEmailTaken: '这个邮箱已经注册过了，直接登录吧。',
+    errEmail: '请填写正确的邮箱。',
+    errName: '请填写你的名字。',
+    errPassword: '密码至少 6 位。',
+    errSignup: '注册没成功，请再试一次。',
+    errLogin: '登录没成功，请再试一次。',
+    errCreate: '没能送它来喵星，请再试一次。',
+    errPhoto: '请至少上传一张照片。',
+    errCatName: '请填写猫的名字。',
+    errSlug: '地址：2–24 位小写字母、数字或短横线。',
+    errPlanetDay: '请选择它来到喵星的日子。',
+    slugTry: (alt) => `试试 /${alt}`,
+    timelineHome: '来到家里',
+    timelineArrived: '来到喵星',
+    close: '关闭',
+    visit: '去看看',
     email: '邮箱',
     password: '密码',
     displayName: '你的名字',
@@ -116,6 +158,9 @@ export function lang() {
   return localStorage.getItem(KEY) === 'zh' ? 'zh' : 'en';
 }
 
+// Runs at import so pages never flash the wrong language.
+document.documentElement.lang = lang() === 'zh' ? 'zh-CN' : 'en';
+
 export function setLang(next) {
   localStorage.setItem(KEY, next);
 }
@@ -133,4 +178,4 @@ export function toggleLang() {
 
 export const BRAND = { en: 'Cat Planet', zh: '喵星' };
 
-// Always show both names as brand marks; page copy follows lang().
+export const brand = () => BRAND[lang()];

@@ -1,6 +1,7 @@
 // 一整张画上的可点区域：主广场的地标、街区里的小屋都用它。
 // 鼠标停上去：那块区域亮起来，上方浮出卡片；点一下去对应的页面。
 // 手机上没有「停上去」：点一下从底下弹出卡片，卡片上的按钮才是去那里。
+import { t } from './i18n.js';
 import { escapeHtml } from './store.js';
 
 const touchOnly = matchMedia('(hover: none)').matches;
@@ -63,8 +64,8 @@ export function mountSpots(stage, spots) {
       });
     }
     const openSheet = () => {
-      sheet.innerHTML = `<button type="button" class="close" aria-label="Close">×</button>${cardHtml(spot)}
-        <a class="button" href="${spot.href}">${escapeHtml(spot.action ?? 'Visit')}</a>`;
+      sheet.innerHTML = `<button type="button" class="close" aria-label="${t('close')}">×</button>${cardHtml(spot)}
+        <a class="button" href="${spot.href}">${escapeHtml(spot.action ?? t('visit'))}</a>`;
       sheet.hidden = false;
       const closeBtn = sheet.querySelector('.close');
       closeBtn.focus();

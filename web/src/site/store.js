@@ -1,7 +1,7 @@
 // Cat Planet front store: sample cat + remote cats from API; lanterns/messages still local for now.
 import { fetchMe, logout as apiLogout, listCats, meCached, openAuthModal } from './auth.js';
 import { NEIGHBORS, SAMPLE_CATS } from './cats.js';
-import { BRAND, lang, t, toggleLang } from './i18n.js';
+import { BRAND, brand, lang, t, toggleLang } from './i18n.js';
 import { phaseAt } from '../schedule.js';
 
 const KEYS = { extra: 'catplanet:extra' };
@@ -48,8 +48,21 @@ function saveExtra(slug, extra) {
   write(KEYS.extra, all);
 }
 
+// Built-in residents carry *Zh copies; user cats show exactly what the owner wrote.
+function localized(cat) {
+  if (lang() !== 'zh') return cat;
+  return {
+    ...cat,
+    coat: cat.coatZh ?? cat.coat,
+    story: cat.storyZh ?? cat.story,
+    timeline: cat.timeline?.map((item) => ({ ...item, text: item.textZh ?? item.text })),
+    messages: cat.messages?.map((message) => ({ ...message, from: message.fromZh ?? message.from, text: message.textZh ?? message.text })),
+  };
+}
+
 function withExtra(cat) {
   const extra = extraFor(cat.slug);
+  cat = localized(cat);
   return {
     ...cat,
     lights: (cat.lights ?? 0) + extra.lights,
@@ -111,7 +124,7 @@ export function statusOf(cat) {
   const phase = phaseAt(cat.tier, new Date());
   const text = lang() === 'zh'
     ? (phase.out ? '出去玩了' : phase.text)
-    : (phase.out ? 'Out playing' : phase.text);
+    : (phase.out ? 'Out playing' : phase.textEn);
   return { text, out: Boolean(phase.out), asleep: Boolean(phase.sleep) };
 }
 
@@ -140,7 +153,7 @@ export function cardHtml(cat) {
 }
 
 export function siteFooter() {
-  return `<span class="footer-brand"><b>Cat Planet</b> · 喵星</span>
+  return `<span class="footer-brand"><b>${brand()}</b></span>
     <span class="footer-links">
       <a href="/about">${t('footerAbout')}</a>
       <a href="/privacy">${t('privacy')}</a>
@@ -148,13 +161,16 @@ export function siteFooter() {
     </span>`;
 }
 
+const PAGE_TITLES_ZH = { 'Send a cat': '送它来喵星', About: '关于', Residents: '居民', Privacy: '隐私说明', Terms: '使用说明' };
+
 export function renderHeader() {
+  const [page, site] = document.title.split(' · ');
+  if (site === BRAND.en && lang() === 'zh') document.title = `${PAGE_TITLES_ZH[page] ?? page} · ${brand()}`;
   const header = document.getElementById('siteHeader');
   const user = me();
   header.innerHTML = `
     <a class="logo" href="/">
-      <span class="logo-en">Cat Planet</span>
-      <span class="logo-zh">喵星</span>
+      <span class="logo-en">${brand()}</span>
     </a>
     <nav>
       <a href="/cats">${t('residents')}</a>

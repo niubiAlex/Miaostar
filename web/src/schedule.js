@@ -4,24 +4,25 @@
 
 // 各时段里它自己想做什么、各有多想（权重）。sleep 是睡得深还是打个盹：deep 不会自己醒，nap 睡一会儿就醒。
 const PHASES = {
-  morning: { label: '清晨', text: '刚睡醒', meal: 'breakfast',
+  morning: { label: '清晨', text: '刚睡醒', textEn: 'Just woke up', meal: 'breakfast',
     weights: { idle: 3, wander: 2, play: 1, scratch: 1.5, sleep: 0.3 } },
-  nap: { label: '上午', text: '打盹中', sleep: 'nap', weights: { sleep: 6, idle: 2, wander: 0.5 } },
-  noon: { label: '中午', text: '醒着，晒晒太阳', weights: { idle: 4, wander: 3, play: 1, scratch: 1, sleep: 1 } },
-  siesta: { label: '下午', text: '午睡中', sleep: 'nap', weights: { sleep: 6, idle: 2, wander: 0.5 } },
-  evening: { label: '傍晚', text: '最精神的时候', meal: 'dinner',
+  nap: { label: '上午', text: '打盹中', textEn: 'Napping', sleep: 'nap', weights: { sleep: 6, idle: 2, wander: 0.5 } },
+  noon: { label: '中午', text: '醒着，晒晒太阳', textEn: 'Awake, sunbathing', weights: { idle: 4, wander: 3, play: 1, scratch: 1, sleep: 1 } },
+  siesta: { label: '下午', text: '午睡中', textEn: 'Afternoon nap', sleep: 'nap', weights: { sleep: 6, idle: 2, wander: 0.5 } },
+  evening: { label: '傍晚', text: '最精神的时候', textEn: 'At their liveliest', meal: 'dinner',
     weights: { idle: 2, wander: 4, play: 2.5, scratch: 1.5, sleep: 0.3 } },
-  night: { label: '夜里', text: '睡觉中', sleep: 'deep', weights: { sleep: 10, idle: 1 } },
-  roam: { label: '夜里', text: '出门夜游去了', out: true, weights: {} },
+  night: { label: '夜里', text: '睡觉中', textEn: 'Asleep', sleep: 'deep', weights: { sleep: 10, idle: 1 } },
+  roam: { label: '夜里', text: '出门夜游去了', textEn: 'Out for a night stroll', out: true, weights: {} },
   // 免费档只有这两个。
-  dayNap: { label: '白天', text: '在家睡觉', sleep: 'deep', weights: {} },
-  nightOut: { label: '晚上', text: '出去玩了，早上 7 点回来', out: true, weights: {} },
+  dayNap: { label: '白天', text: '在家睡觉', textEn: 'Sleeping at home', sleep: 'deep', weights: {} },
+  nightOut: { label: '晚上', text: '出去玩了，早上 7 点回来', textEn: 'Out playing, back at 7 am', out: true, weights: {} },
 };
 
 // 从几点开始是哪个时段（按开始时间排好，最后一个一直到第二天第一个之前）。
 const DAY = [[7, 'morning'], [9, 'nap'], [12, 'noon'], [14, 'siesta'], [18, 'evening'], [21, 'night']];
 
 export const MEALS = { breakfast: '早饭', dinner: '晚饭' };
+export const MEALS_EN = { breakfast: 'breakfast', dinner: 'dinner' };
 
 function hash(text) {
   let h = 2166136261;
