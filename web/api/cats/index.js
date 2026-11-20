@@ -1,5 +1,5 @@
 import {
-  RESERVED, VOICES, allRemoteCats, currentUser, publicCat, readBody, sampleCats, send, slugExists, writeJson,
+  RESERVED, VOICES, allRemoteCats, currentUser, publicCat, readBody, sampleCats, send, slugExists, writeBinary, writeJson,
 } from '../_lib.js';
 import { translateCat } from '../_translate.js';
 
@@ -21,6 +21,14 @@ export default async function handler(req, res) {
   if (RESERVED.has(slug)) return send(res, { error: 'Address reserved', taken: true }, 409);
   if (await slugExists(slug)) return send(res, { error: 'Address already taken', taken: true }, 409);
 
+  // 照片原图单独存，生成小屋时脚本来取；猫的资料里只留数量。
+  const photos = (Array.isArray(body.photos) ? body.photos : []).slice(0, 5)
+    .map((photo) => String(photo).match(/^data:image\/jpeg;base64,([A-Za-z0-9+/=]+)$/)?.[1])
+    .filter(Boolean)
+    .map((data) => Buffer.from(data, 'base64'))
+    .filter((data) => data.length > 0 && data.length <= 2_000_000);
+  await Promise.all(photos.map((data, index) => writeBinary(`photos/${slug}/${index + 1}.jpg`, data, 'image/jpeg')));
+
   const cat = await translateCat({
     slug,
     name,
@@ -40,6 +48,7 @@ export default async function handler(req, res) {
       .slice(0, 10).map((item) => ({ date: String(item.date || '').slice(0, 10), text: String(item.text || '').slice(0, 80) })),
     lights: 0,
     messages: [],
+    photoCount: photos.length,
     generating: true,
     createdAt: new Date().toISOString(),
   }, req);

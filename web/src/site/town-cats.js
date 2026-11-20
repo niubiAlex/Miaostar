@@ -55,7 +55,7 @@ function weighted(entries) {
 // 这只猫在广场上用哪套视频：有自己动画的用自己的，示例邻居按花色用同一套。
 export function spriteOf(cat) {
   if (cat.animated && !cat.assets) return '/assets/home45/plaza';
-  if (cat.assets) return `/assets/cats/${cat.assets}/plaza`;
+  if (cat.assets) return cat.plaza === false ? null : `/assets/cats/${cat.assets}/plaza`;
   const coat = cat.portrait?.match(/\/cat_(\w+)\.jpg$/);
   return coat ? `/assets/cats/coat_${coat[1]}/plaza` : null;
 }

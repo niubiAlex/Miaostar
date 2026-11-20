@@ -54,6 +54,16 @@ export async function writeJson(pathname, data) {
   });
 }
 
+export async function writeBinary(pathname, data, contentType) {
+  await put(pathname.replace(/^\//, ''), data, {
+    access: 'private',
+    addRandomSuffix: false,
+    allowOverwrite: true,
+    contentType,
+    token: token(),
+  });
+}
+
 export async function remove(pathname) {
   const prefix = pathname.replace(/^\//, '');
   const { blobs } = await list({ prefix, limit: 5, token: token() });

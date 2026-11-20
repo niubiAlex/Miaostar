@@ -7,7 +7,10 @@ import { DEFAULT_VOICE, VOICES, createVoice } from './sound.js';
 
 const RESERVED = new Set(['cats', 'new', 'home', 'me', 'assets', 'src', 'site', 'concepts', 'scripts', 'vendor', 'api',
   'login', 'admin', 'about', 'privacy', 'terms']);
-const PHOTO_SIZE = 512;
+// 头像 512 就够；生成小屋要看清花纹，原图留大一点。整个请求要在 Vercel 的 4.5MB 以内。
+const PORTRAIT_SIZE = 512;
+const PHOTO_SIZES = [1600, 1200, 900];
+const MAX_UPLOAD = 3_600_000;
 const MAX_PHOTOS = 5;
 
 await ensureAuth();
@@ -48,11 +51,11 @@ for (const button of document.querySelectorAll('.voice-play')) {
 document.getElementById('gateLogin')?.addEventListener('click', () => openAuthModal({ mode: 'login' }));
 document.getElementById('gateSignup')?.addEventListener('click', () => openAuthModal({ mode: 'register' }));
 
-function shrink(file) {
+function shrink(file, size) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => {
-      const scale = Math.min(1, PHOTO_SIZE / Math.max(image.width, image.height));
+      const scale = Math.min(1, size / Math.max(image.width, image.height));
       const canvas = document.createElement('canvas');
       canvas.width = Math.round(image.width * scale);
       canvas.height = Math.round(image.height * scale);
@@ -67,7 +70,7 @@ function shrink(file) {
 
 function paintPhotos() {
   const zh = lang() === 'zh';
-  document.getElementById('photoPreview').innerHTML = photos.map((src, index) => `<span class="photo-thumb">
+  document.getElementById('photoPreview').innerHTML = photos.map(({ src }, index) => `<span class="photo-thumb">
     <img src="${src}" alt="" />
     <button type="button" data-remove="${index}" aria-label="${zh ? '去掉这张' : 'Remove'}">×</button>
   </span>`).join('');
@@ -78,7 +81,8 @@ function paintPhotos() {
 
 // 再选一次是往后加，不是替换；点缩略图上的 × 去掉一张。
 form.photos?.addEventListener('change', async () => {
-  const added = await Promise.all([...form.photos.files].slice(0, MAX_PHOTOS - photos.length).map(shrink));
+  const added = await Promise.all([...form.photos.files].slice(0, MAX_PHOTOS - photos.length)
+    .map(async (file) => ({ file, src: await shrink(file, PORTRAIT_SIZE) })));
   photos = [...photos, ...added];
   form.photos.value = '';
   paintPhotos();
@@ -140,6 +144,14 @@ async function problem(data) {
   return null;
 }
 
+async function uploadPhotos() {
+  for (const size of PHOTO_SIZES) {
+    const full = await Promise.all(photos.map(({ file }) => shrink(file, size)));
+    if (full.reduce((sum, item) => sum + item.length, 0) <= MAX_UPLOAD) return full;
+  }
+  return Promise.all(photos.map(({ src }) => src));
+}
+
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   if (!me()) {
@@ -159,6 +171,8 @@ form.addEventListener('submit', async (event) => {
     { date: data.planetDay, text: tr('timelineArrived') },
   ].filter(Boolean);
 
+  const submit = form.querySelector('button[type=submit]');
+  submit.disabled = true;
   try {
     await createCat({
       slug: data.slug,
@@ -167,7 +181,8 @@ form.addEventListener('submit', async (event) => {
       birthday: data.birthday,
       homeDay: data.homeDay,
       planetDay: data.planetDay,
-      portrait: photos[0],
+      portrait: photos[0].src,
+      photos: await uploadPhotos(),
       voice: data.voice || DEFAULT_VOICE,
       story: data.story.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
       timeline,
@@ -176,5 +191,6 @@ form.addEventListener('submit', async (event) => {
   } catch (error) {
     errorBox.hidden = false;
     errorBox.textContent = error.message;
+    submit.disabled = false;
   }
 });
