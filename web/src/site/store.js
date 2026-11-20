@@ -1,12 +1,8 @@
-// Cat Planet front store: sample cat + remote cats from API; lanterns/messages still local for now.
+// Cat Planet front store: sample cat + remote cats from API. Lanterns and messages live on the server (social.js).
 import { fetchMe, logout as apiLogout, listCats, meCached, openAuthModal } from './auth.js';
 import { NEIGHBORS, SAMPLE_CATS } from './cats.js';
 import { BRAND, brand, lang, t, toggleLang } from './i18n.js';
 import { phaseAt } from '../schedule.js';
-
-const KEYS = { extra: 'catplanet:extra' };
-const read = (key, fallback) => JSON.parse(localStorage.getItem(key) ?? 'null') ?? fallback;
-const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
 
 let remoteCats = [];
 let ready = null;
@@ -38,42 +34,25 @@ export async function logout() {
   await apiLogout();
 }
 
-function extraFor(slug) {
-  return read(KEYS.extra, {})[slug] ?? { lights: 0, lit: false, messages: [] };
+// Text written in one language carries a translated copy (*Zh / *En); show the reader's.
+const pick = (item, field) => item[`${field}${lang() === 'zh' ? 'Zh' : 'En'}`] ?? item[field];
+
+export function localizeMessage(message) {
+  return { ...message, from: pick(message, 'from'), text: pick(message, 'text') };
 }
 
-function saveExtra(slug, extra) {
-  const all = read(KEYS.extra, {});
-  all[slug] = extra;
-  write(KEYS.extra, all);
-}
-
-// Built-in residents carry *Zh copies; user cats show exactly what the owner wrote.
-function localized(cat) {
-  if (lang() !== 'zh') return cat;
+export function localized(cat) {
   return {
     ...cat,
-    coat: cat.coatZh ?? cat.coat,
-    story: cat.storyZh ?? cat.story,
-    timeline: cat.timeline?.map((item) => ({ ...item, text: item.textZh ?? item.text })),
-    messages: cat.messages?.map((message) => ({ ...message, from: message.fromZh ?? message.from, text: message.textZh ?? message.text })),
-  };
-}
-
-function withExtra(cat) {
-  const extra = extraFor(cat.slug);
-  cat = localized(cat);
-  return {
-    ...cat,
-    lights: (cat.lights ?? 0) + extra.lights,
-    lit: extra.lit,
-    messages: [...(cat.messages ?? []), ...extra.messages],
+    coat: pick(cat, 'coat'),
+    story: pick(cat, 'story'),
+    timeline: cat.timeline?.map((item) => ({ ...item, text: pick(item, 'text') })),
+    messages: (cat.messages ?? []).map(localizeMessage),
   };
 }
 
 function displayName(cat) {
-  if (lang() === 'zh' && cat.nameZh) return cat.nameZh;
-  return cat.name;
+  return pick(cat, 'name');
 }
 
 function displayOwner(cat) {
@@ -84,7 +63,7 @@ function displayOwner(cat) {
 export function allCats() {
   const bySlug = new Map();
   for (const cat of [...SAMPLE_CATS, ...NEIGHBORS, ...remoteCats]) bySlug.set(cat.slug, cat);
-  return [...bySlug.values()].map(withExtra);
+  return [...bySlug.values()].map(localized);
 }
 
 export function findCat(slug) {
@@ -93,18 +72,6 @@ export function findCat(slug) {
 
 export function slugTaken(slug) {
   return allCats().some((cat) => cat.slug === slug);
-}
-
-export function lightCandle(slug) {
-  const extra = extraFor(slug);
-  if (extra.lit) return;
-  saveExtra(slug, { ...extra, lights: extra.lights + 1, lit: true });
-}
-
-export function leaveMessage(slug, from, text) {
-  const extra = extraFor(slug);
-  const at = new Date().toISOString().slice(0, 10);
-  saveExtra(slug, { ...extra, messages: [...extra.messages, { from, text, at }] });
 }
 
 export const isOwner = (cat) => {

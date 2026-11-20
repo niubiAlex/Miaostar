@@ -684,9 +684,107 @@ body.booting .site-header {
   margin: 28px 4px 8px;
 }
 
+.home-actions {
+  justify-content: space-between;
+}
+
+.lantern-box,
+.sound-box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
 .home-actions .count {
   color: var(--soft-ink);
   font-size: var(--text-sm);
+}
+
+.voice-picker {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  color: var(--soft-ink);
+  font-size: var(--text-sm);
+}
+
+.voice-picker select {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+}
+
+.message-login {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.voice-field {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.voice-field legend {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.voice-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(108px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.voice-option {
+  position: relative;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.voice-option:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.voice-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.voice-option:has(input:focus-visible) {
+  box-shadow: var(--focus);
+}
+
+.voice-name {
+  font-weight: 600;
+}
+
+.voice-note {
+  color: var(--soft-ink);
+  font-size: var(--text-xs);
+}
+
+.voice-play {
+  justify-self: start;
+  min-height: 36px;
+  margin-top: 4px;
+  padding: 0 12px;
 }
 
 .home-story {

@@ -63,12 +63,21 @@
 
         <label><span><span data-lang="en">Coat (optional)</span><span data-lang="zh">花色（可不填）</span></span><input name="coat" maxlength="20" placeholder="calico / 三花" /></label>
 
+        <fieldset class="voice-field">
+          <legend><span data-lang="en">Voice</span><span data-lang="zh">声音</span></legend>
+          <p class="hint">
+            <span data-lang="en">Real cat recordings. Pick the one that sounds most like them — you can change it later.</span>
+            <span data-lang="zh">都是真猫的录音。挑一个最像它的，之后也可以换。</span>
+          </p>
+          <div id="voiceOptions" class="voice-options"></div>
+        </fieldset>
+
         <label>
           <span><span data-lang="en">What you want to say</span><span data-lang="zh">想对它说的话</span></span>
           <textarea name="story" rows="6" maxlength="2000"></textarea>
           <span class="hint">
-            <span data-lang="en">How you met, little habits, what you miss… A blank line starts a new paragraph.</span>
-            <span data-lang="zh">怎么遇见的、小习惯、你想念的地方……空一行就是新的一段。</span>
+            <span data-lang="en">How you met, little habits, what you miss… A blank line starts a new paragraph. We translate it automatically so Chinese readers can read it too.</span>
+            <span data-lang="zh">怎么遇见的、小习惯、你想念的地方……空一行就是新的一段。我们会自动翻译成英文，外国朋友也能看懂。</span>
           </span>
         </label>
 

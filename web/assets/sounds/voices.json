@@ -1,0 +1,45 @@
+{
+ "gentle": {
+  "meows": [
+   "meow1.mp3",
+   "meow2.mp3",
+   "meow3.mp3"
+  ],
+  "purr": "purr.mp3"
+ },
+ "sweet": {
+  "meows": [
+   "meow1.mp3",
+   "meow2.mp3",
+   "meow3.mp3",
+   "meow4.mp3"
+  ],
+  "purr": "purr.mp3"
+ },
+ "chatty": {
+  "meows": [
+   "meow1.mp3",
+   "meow2.mp3",
+   "meow3.mp3",
+   "meow4.mp3"
+  ],
+  "purr": "purr.mp3"
+ },
+ "deep": {
+  "meows": [
+   "meow1.mp3",
+   "meow2.mp3",
+   "meow3.mp3",
+   "meow4.mp3"
+  ],
+  "purr": "purr.mp3"
+ },
+ "kitten": {
+  "meows": [
+   "meow1.mp3",
+   "meow2.mp3",
+   "meow3.mp3"
+  ],
+  "purr": "purr.mp3"
+ }
+}

@@ -3,6 +3,7 @@
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=4';
 import { MEALS, MEALS_EN, dayKey, phaseAt, skyAt } from './schedule.js?v=6';
+import { createVoice } from './site/sound.js?v=1';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
 const STAGE = { width: 576, height: 720 };
@@ -37,6 +38,12 @@ const FAST = params.has('fast'); // 检查脚本用：睡得短、出门短
 const ZH = (params.get('lang') ?? localStorage.getItem('catplanet:lang') ?? 'en') === 'zh';
 const L = (zh, en) => (ZH ? zh : en);
 const mealName = (meal) => (ZH ? MEALS : MEALS_EN)[meal];
+// 嵌在主页里时声音交给外面的页面放（它有开关，也拿得到访客的点击）；单独打开时自己放。
+const voice = params.has('embed') ? null : createVoice(params.get('voice'));
+function sound(kind) {
+  if (voice) voice.play(kind);
+  else window.parent.postMessage({ type: 'catplanet:sound', kind }, location.origin);
+}
 // 三个档位：免费只会睡觉；¥99 醒着陪你，待在屋子中间；¥299 全套，满屋走、出门。
 // activities 是这一档自己会做、也能让它去做的事；idles 是待着时的小动作和权重。
 const TIERS = {
@@ -473,6 +480,7 @@ async function waitForMeal(phase) {
   cat.hungryLoops += 1;
   if (cat.hungryLoops % 3 === 1) {
     say(pick(L([`喵～${MEALS[phase.meal]}呢？`, '碗空空的…', '饿了，喵'], [`Meow~ where’s ${mealName(phase.meal)}?`, 'The bowl is empty…', 'Hungry, meow'])));
+    sound('meow');
     await playClip('called');
   } else {
     await playClip('stand_idle', { calm: true });
@@ -526,6 +534,7 @@ async function comeBack() {
   cat.out = false;
   cat.tiredness = Math.min(1, cat.tiredness + 0.25);
   say(pick(L(['我回来啦', '外面真好玩', '回家啦'], ['I’m back', 'Outside was fun', 'Home again'])));
+  sound('meow');
 }
 
 async function react(kind) {
@@ -539,7 +548,10 @@ async function react(kind) {
   }
   // 免费档只会睡觉：叫它也不醒，耳朵动一动。
   if (SLEEPS_ONLY) {
-    if (kind === 'pet') hearts();
+    if (kind === 'pet') {
+      hearts();
+      sound('purr');
+    }
     say(kind === 'pet' ? L('呼噜呼噜…', 'Purr purr…') : pick(L(['呼…睡得正香', 'zzz…'], ['Fast asleep…', 'zzz…'])));
     await playClip('sleep_idle', { calm: true });
     return;
@@ -548,12 +560,14 @@ async function react(kind) {
     if (cat.asleep) {
       // 睡着被摸不醒，只是更安心。
       hearts();
+      sound('purr');
       say(L('呼噜呼噜…', 'Purr purr…'));
       await playClip('sleep_idle', { calm: true });
       return;
     }
     await face('fl');
     hearts();
+    sound('purr');
     say(pick(L(['喵～', '舒服', '再摸摸'], ['Meow~', 'Nice', 'More, please'])));
     await playClip('petted');
     return;
@@ -561,6 +575,7 @@ async function react(kind) {
   // 被叫：睡着就醒过来，背对着就转过来，然后看向你应一声。
   await face('fl');
   say(pick(L(['喵？', '喵～', '在呢'], ['Meow?', 'Meow~', 'I’m here'])));
+  sound('meow');
   await playClip('called');
 }
 

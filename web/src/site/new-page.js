@@ -2,7 +2,8 @@
 import { checkSlug, createCat, openAuthModal } from './auth.js';
 import { nextSlug, slugifyName, validSlug } from './slug.js';
 import { ensureAuth, me, renderHeader } from './store.js';
-import { t as tr } from './i18n.js';
+import { lang, t as tr } from './i18n.js';
+import { DEFAULT_VOICE, VOICES, createVoice } from './sound.js';
 
 const RESERVED = new Set(['cats', 'new', 'home', 'me', 'assets', 'src', 'site', 'concepts', 'scripts', 'vendor', 'api',
   'login', 'admin', 'about', 'privacy', 'terms']);
@@ -25,6 +26,25 @@ function syncGate() {
 }
 
 syncGate();
+
+document.getElementById('voiceOptions').innerHTML = Object.entries(VOICES).map(([id, voice]) => {
+  const zh = lang() === 'zh';
+  return `<label class="voice-option">
+    <input type="radio" name="voice" value="${id}" ${id === DEFAULT_VOICE ? 'checked' : ''} />
+    <span class="voice-name">${zh ? voice.zh : voice.en}</span>
+    <span class="voice-note">${zh ? voice.noteZh : voice.noteEn}</span>
+    <button type="button" class="button ghost voice-play" data-voice="${id}">${tr('voicePreview')}</button>
+  </label>`;
+}).join('');
+const previews = {};
+for (const button of document.querySelectorAll('.voice-play')) {
+  button.addEventListener('click', () => {
+    const id = button.dataset.voice;
+    form.querySelector(`input[name=voice][value=${id}]`).checked = true;
+    (previews[id] ??= createVoice(id)).play('meow');
+  });
+}
+
 document.getElementById('gateLogin')?.addEventListener('click', () => openAuthModal({ mode: 'login' }));
 document.getElementById('gateSignup')?.addEventListener('click', () => openAuthModal({ mode: 'register' }));
 
@@ -120,6 +140,7 @@ form.addEventListener('submit', async (event) => {
       homeDay: data.homeDay,
       planetDay: data.planetDay,
       portrait: photos[0],
+      voice: data.voice || DEFAULT_VOICE,
       story: data.story.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
       timeline,
     });

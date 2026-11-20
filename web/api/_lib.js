@@ -114,6 +114,19 @@ export async function currentUser(req) {
   return { id: user.id, email: user.email, name: user.name };
 }
 
+export async function listBlobs(prefix) {
+  const blobs = [];
+  let cursor;
+  do {
+    const page = await list({ prefix, limit: 1000, cursor, token: token() });
+    blobs.push(...page.blobs);
+    cursor = page.hasMore ? page.cursor : undefined;
+  } while (cursor);
+  return blobs;
+}
+
+export const VOICES = ['gentle', 'sweet', 'chatty', 'deep', 'kitten'];
+
 export async function allRemoteCats() {
   const { blobs } = await list({ prefix: 'cats/', limit: 1000, token: token() });
   const cats = [];

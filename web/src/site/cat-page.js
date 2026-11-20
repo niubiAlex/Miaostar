@@ -1,9 +1,10 @@
 // Cat page: room first, story second, dossier third.
-import { getCat } from './auth.js';
-import { brand, lang } from './i18n.js';
+import { fetchSocial, getCat, openAuthModal, postSocial, updateCat } from './auth.js';
+import { brand, lang, t } from './i18n.js';
+import { DEFAULT_VOICE, VOICES, createVoice, setSoundOn, soundOn } from './sound.js';
 import {
   addressOf, daysOnPlanet, displayName, displayOwner, ensureAuth, escapeHtml, findCat, formatDate,
-  isOwner, leaveMessage, lightCandle, me, renderHeader, statusOf,
+  isOwner, localizeMessage, localized, me, renderHeader, statusOf,
 } from './store.js';
 
 const slug = decodeURIComponent(location.pathname.slice(1)).replace(/\/$/, '');
@@ -30,7 +31,7 @@ function roomHtml(cat, owner) {
     </div>
     <p class="room-note">${zh ? '小屋动画还在路上' : 'Home animation is still on the way'}</p>`;
   }
-  const params = new URLSearchParams({ tier: cat.tier, embed: '1', lang: zh ? 'zh' : 'en' });
+  const params = new URLSearchParams({ tier: cat.tier, embed: '1', lang: zh ? 'zh' : 'en', voice: cat.voice || DEFAULT_VOICE });
   if (cat.assets) params.set('cat', cat.assets);
   if (!owner) params.set('visitor', '1');
   return `<iframe class="room-frame ${owner ? 'owner' : ''}" src="/home.html?${params}" title="${escapeHtml(name)}${zh ? ' 的小屋' : ' · home'}"></iframe>
@@ -41,28 +42,134 @@ function roomHtml(cat, owner) {
         : `Only ${escapeHtml(displayOwner(cat))} can play with ${escapeHtml(name)}. You can watch what it is doing.`)}</p>`;
 }
 
+// Built-in messages that came with the cat, then everyone's messages from the server.
+let social = { lights: 0, lit: false, messages: [] };
+let voice = null;
+
+const lanternCount = (cat) => (cat.lights ?? 0) + social.lights;
+const allMessages = (cat) => [...(cat.messages ?? []), ...social.messages.map(localizeMessage)];
+
 function messagesHtml(cat) {
-  const zh = lang() === 'zh';
-  if (cat.messages.length === 0) return `<li class="hint">${zh ? '还没有人留言。' : 'No messages yet.'}</li>`;
-  return [...cat.messages].reverse().map((message) => `<li>
+  const messages = allMessages(cat);
+  if (messages.length === 0) return `<li class="hint">${t('noMessages')}</li>`;
+  return [...messages].reverse().map((message) => `<li>
     <span class="from">${escapeHtml(message.from)}</span><time>${escapeHtml(message.at)}</time>
     <div>${escapeHtml(message.text)}</div>
   </li>`).join('');
 }
 
-function bindSocial(cat) {
-  root.querySelector('#lightButton')?.addEventListener('click', () => {
-    lightCandle(cat.slug);
-    render(findCat(cat.slug) || cat);
-  });
-  root.querySelector('#messageForm')?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const text = new FormData(event.target).get('text').trim();
-    if (!text) return;
-    leaveMessage(cat.slug, me()?.name ?? (lang() === 'zh' ? '一位访客' : 'A visitor'), text);
-    render(findCat(cat.slug) || cat);
+function lanternHtml(cat) {
+  const name = escapeHtml(displayName(cat));
+  return `<button type="button" class="button" id="lightButton" ${social.lit ? 'disabled' : ''}>
+      ${social.lit ? t('lanternLit') : t('lightFor', name)}
+    </button>
+    <span class="count" id="lightCount">${t('lanternCount', lanternCount(cat))}</span>`;
+}
+
+function messageFormHtml(cat) {
+  if (!me()) {
+    return `<p class="hint message-login">${t('loginToMessage')}
+      <button type="button" class="button ghost" id="messageLogin">${t('login')}</button></p>`;
+  }
+  return `<form class="message-form" id="messageForm">
+      <input name="text" maxlength="120" placeholder="${t('sayTo', escapeHtml(displayName(cat)))}" required />
+      <button type="submit" class="button ghost">${t('sendMessage')}</button>
+    </form>
+    <p class="error" id="messageError" hidden></p>`;
+}
+
+function soundHtml() {
+  return `<button type="button" class="button ghost sound-toggle" id="soundToggle" aria-pressed="${soundOn()}">
+    ${soundOn() ? t('soundOn') : t('soundOff')}</button>`;
+}
+
+function voicePickerHtml(cat) {
+  const current = cat.voice || DEFAULT_VOICE;
+  const zh = lang() === 'zh';
+  return `<label class="voice-picker">${t('voiceLabel')}
+    <select id="voiceSelect">${Object.entries(VOICES).map(([id, v]) =>
+      `<option value="${id}" ${id === current ? 'selected' : ''}>${zh ? v.zh : v.en} · ${zh ? v.noteZh : v.noteEn}</option>`).join('')}
+    </select></label>`;
+}
+
+function paintSocial(cat) {
+  root.querySelector('#lanternBox').innerHTML = lanternHtml(cat);
+  root.querySelector('#messageList').innerHTML = messagesHtml(cat);
+  root.querySelector('#lightButton')?.addEventListener('click', async (event) => {
+    event.currentTarget.disabled = true;
+    try {
+      social = await postSocial(cat.slug, { action: 'light' });
+    } catch {
+      event.currentTarget.disabled = false;
+    }
+    paintSocial(cat);
   });
 }
+
+function bindSocial(cat) {
+  paintSocial(cat);
+  fetchSocial(cat.slug).then((data) => {
+    social = data;
+    paintSocial(cat);
+  }).catch(() => {});
+
+  root.querySelector('#messageLogin')?.addEventListener('click', async () => {
+    await openAuthModal({ mode: 'login' });
+    if (me()) location.reload();
+  });
+  root.querySelector('#messageForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.target;
+    const error = root.querySelector('#messageError');
+    const text = new FormData(form).get('text').trim();
+    if (!text) return;
+    const button = form.querySelector('button');
+    button.disabled = true;
+    error.hidden = true;
+    try {
+      social = await postSocial(cat.slug, { action: 'message', text });
+      form.reset();
+      paintSocial(cat);
+    } catch (problem) {
+      error.textContent = problem.message;
+      error.hidden = false;
+    }
+    button.disabled = false;
+  });
+
+  voice = createVoice(cat.voice);
+  bindSoundToggle(cat);
+  root.querySelector('#voiceSelect')?.addEventListener('change', async (event) => {
+    const next = event.target.value;
+    try {
+      const saved = await updateCat(cat.slug, { voice: next });
+      cat.voice = saved.voice;
+      voice = createVoice(cat.voice);
+      voice.play('meow');
+      const frame = root.querySelector('.room-frame');
+      if (frame) frame.src = frame.src.replace(/voice=[a-z]+/, `voice=${cat.voice}`);
+    } catch (problem) {
+      event.target.value = cat.voice || DEFAULT_VOICE;
+      alert(problem.message);
+    }
+  });
+}
+
+function bindSoundToggle(cat) {
+  root.querySelector('#soundToggle')?.addEventListener('click', (event) => {
+    setSoundOn(!soundOn());
+    event.currentTarget.outerHTML = soundHtml();
+    bindSoundToggle(cat);
+    if (soundOn()) voice.play('meow');
+  });
+}
+
+// The room iframe asks us to play its sounds: we hold the sound switch and the visitor's click.
+window.addEventListener('message', (event) => {
+  if (event.origin !== location.origin || event.data?.type !== 'catplanet:sound') return;
+  if (event.source !== root.querySelector('.room-frame')?.contentWindow) return;
+  if (soundOn() && voice) voice.play(event.data.kind);
+});
 
 function render(cat) {
   const zh = lang() === 'zh';
@@ -96,10 +203,8 @@ function render(cat) {
     </div>
 
     <div class="home-actions">
-      <button type="button" class="button" id="lightButton" ${cat.lit ? 'disabled' : ''}>
-        ${cat.lit ? (zh ? '已为它点灯' : 'Lantern lit') : (zh ? `为${escapeHtml(name)}点一盏灯` : `Light a lantern for ${escapeHtml(name)}`)}
-      </button>
-      <span class="count">${zh ? `已经有 ${cat.lights} 盏灯` : `${cat.lights} lanterns`}</span>
+      <div class="lantern-box" id="lanternBox"></div>
+      <div class="sound-box">${cat.animated ? soundHtml() : ''}${owned ? voicePickerHtml(cat) : ''}</div>
     </div>
 
     ${cat.story?.length ? `<section class="home-story">
@@ -121,15 +226,15 @@ function render(cat) {
 
     <section class="home-messages">
       <h2>${zh ? '留言' : 'Messages'}</h2>
-      <ul class="messages">${messagesHtml(cat)}</ul>
-      <form class="message-form" id="messageForm">
-        <input name="text" maxlength="120" placeholder="${zh ? `对${escapeHtml(name)}说一句话` : `Say something to ${escapeHtml(name)}`}" required />
-        <button type="submit" class="button ghost">${zh ? '留言' : 'Send'}</button>
-      </form>
+      <ul class="messages" id="messageList"></ul>
+      ${messageFormHtml(cat)}
     </section>`;
   bindSocial(cat);
 }
 
 let cat = findCat(slug);
-if (!cat) cat = await getCat(slug);
+if (!cat) {
+  const remote = await getCat(slug);
+  cat = remote ? localized(remote) : null;
+}
 render(cat);

@@ -1,6 +1,7 @@
 import {
-  RESERVED, allRemoteCats, currentUser, publicCat, readBody, sampleCats, send, slugExists, writeJson,
+  RESERVED, VOICES, allRemoteCats, currentUser, publicCat, readBody, sampleCats, send, slugExists, writeJson,
 } from '../_lib.js';
+import { translateCat } from '../_translate.js';
 
 export default async function handler(req, res) {
   if (req.method === 'GET') {
@@ -20,7 +21,7 @@ export default async function handler(req, res) {
   if (RESERVED.has(slug)) return send(res, { error: 'Address reserved', taken: true }, 409);
   if (await slugExists(slug)) return send(res, { error: 'Address already taken', taken: true }, 409);
 
-  const cat = {
+  const cat = await translateCat({
     slug,
     name,
     owner: user.name,
@@ -28,18 +29,20 @@ export default async function handler(req, res) {
     ownerEmail: user.email,
     tier: 'free',
     animated: false,
+    voice: VOICES.includes(body.voice) ? body.voice : 'gentle',
     portrait: body.portrait || '/assets/site/cat_orange.jpg',
-    coat: body.coat || '',
     birthday: body.birthday || '',
     homeDay: body.homeDay || '',
     planetDay: body.planetDay || new Date().toISOString().slice(0, 10),
-    story: Array.isArray(body.story) ? body.story : [],
-    timeline: body.timeline || [{ date: new Date().toISOString().slice(0, 10), text: 'Arrived on Cat Planet' }],
+    coat: String(body.coat || '').slice(0, 20),
+    story: (Array.isArray(body.story) ? body.story : []).map((paragraph) => String(paragraph).slice(0, 2000)).slice(0, 20),
+    timeline: (Array.isArray(body.timeline) ? body.timeline : [{ date: new Date().toISOString().slice(0, 10), text: 'Arrived on Cat Planet' }])
+      .slice(0, 10).map((item) => ({ date: String(item.date || '').slice(0, 10), text: String(item.text || '').slice(0, 80) })),
     lights: 0,
     messages: [],
     generating: true,
     createdAt: new Date().toISOString(),
-  };
+  }, req);
   await writeJson(`cats/${slug}.json`, cat);
   return send(res, { cat: publicCat(cat) }, 201);
 }

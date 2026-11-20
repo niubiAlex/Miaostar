@@ -14,6 +14,8 @@ const SERVER_ERRORS = {
   'Address reserved': 'slugTaken',
   'Invalid address': 'errSlug',
   'Cat name required': 'errCatName',
+  'Too fast': 'errTooFast',
+  'Message is empty': 'errEmpty',
   'Please log in first': 'needLogin',
 };
 const localError = (message, fallbackKey) => t(SERVER_ERRORS[message] ?? fallbackKey);
@@ -86,6 +88,33 @@ export async function listCats() {
   if (!response.ok) return [];
   const data = await response.json();
   return data.cats || [];
+}
+
+async function social(slug, init) {
+  const response = await fetch(`/api/social?slug=${encodeURIComponent(slug)}`, { credentials: 'include', ...init });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(localError(data.error, 'errGeneric'));
+  return data;
+}
+
+export const fetchSocial = (slug) => social(slug);
+
+export const postSocial = (slug, payload) => social(slug, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify(payload),
+});
+
+export async function updateCat(slug, changes) {
+  const response = await fetch('/api/cats/update', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ slug, ...changes }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(localError(data.error, 'errGeneric'));
+  return data.cat;
 }
 
 export async function getCat(slug) {
