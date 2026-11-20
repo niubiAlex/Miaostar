@@ -69,8 +69,16 @@ const canvas = document.getElementById('worldCanvas');
 const panel = document.getElementById('worldPanel');
 const nav = document.getElementById('worldNav');
 
+// ?hour=21 看其他时间的城镇。
+const pageHour = new URLSearchParams(location.search).get('hour');
+const townNow = () => {
+  const date = new Date();
+  if (pageHour !== null) date.setHours(Number(pageHour), 0, 0, 0);
+  return date;
+};
+
 function applyWorldSky() {
-  const sky = skyAt(new Date());
+  const sky = skyAt(townNow());
   if (view.dataset.sky !== sky.id) view.dataset.sky = sky.id;
 }
 applyWorldSky();
@@ -168,6 +176,39 @@ function landmarkSpots() {
 }
 mountSpots(spotLayer, [...houseSpots(), ...landmarkSpots()]);
 
+// ---------- 夜里的灯：每间小屋的窗、广场上的路灯 ----------
+// 夜色是盖在整张画上的一层，灯要亮就得在它上面，所以单独一层，跟画布用同一个变换。
+const lightLayer = document.createElement('div');
+lightLayer.className = 'town-lights';
+lightLayer.setAttribute('aria-hidden', 'true');
+Object.assign(lightLayer.style, { width: `${WORLD_W}px`, height: `${WORLD_H}px` });
+view.append(lightLayer);
+// 路灯灯头在高清中心图上的像素位置。
+const LAMPS = [[1556, 860], [1627, 985], [2088, 814], [2236, 897], [2167, 1050], [1874, 1081], [1714, 1159]];
+// 每间房的亮度和熄灯时间固定（按房号算），刷新页面不会变；半夜以后陆续有人睡了。
+const seeded = (n) => {
+  const x = Math.sin(n * 12.9898) * 43758.5453;
+  return x - Math.floor(x);
+};
+lightLayer.innerHTML = [
+  ...houses.map(([x, y, w, h], index) => {
+    const style = `left:${x + w * 0.5}px;top:${y + h * 0.62}px;width:${w * 1.3}px;height:${h}px;`
+      + `--glow:${(0.65 + seeded(index + 1) * 0.35).toFixed(2)};--flicker:${(3 + seeded(index + 50) * 4).toFixed(1)}s`;
+    return `<i class="window-light" data-off="${Math.floor(seeded(index + 200) * 6)}" style="${style}"></i>`;
+  }),
+  ...LAMPS.map((point) => {
+    const [x, y] = fromCenter(point);
+    return `<i class="lamp-light" style="left:${x}px;top:${y}px"></i>`;
+  }),
+].join('');
+// 0 点以后每过一小时，data-off 小于它的那些房子熄灯，到 5 点大约一半睡了。
+function applyLateNight() {
+  const hour = townNow().getHours();
+  lightLayer.dataset.late = hour < 5 ? String(hour + 1) : '0';
+}
+applyLateNight();
+setInterval(applyLateNight, 60_000);
+
 // ---------- 广场上的猫 ----------
 const catLayer = document.createElement('div');
 catLayer.className = 'town-cats';
@@ -209,6 +250,7 @@ function render() {
   const { width, height } = viewSize();
   const { x, y, z } = camera;
   canvas.style.transform = `translate3d(${width / 2 - x * z}px, ${height / 2 - y * z}px, 0) scale(${z})`;
+  lightLayer.style.transform = canvas.style.transform;
   // 远处看不清城镇里的东西：高清层、小屋和猫在放大到城镇全景的一半时才淡入。
   const near = Math.min(Math.max((z / overviewZoom() - 0.3) / 0.3, 0), 1);
   canvas.style.setProperty('--detail', near);

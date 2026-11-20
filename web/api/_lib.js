@@ -3,7 +3,7 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 
 export const RESERVED = new Set([
   'cats', 'new', 'home', 'me', 'assets', 'src', 'site', 'concepts', 'scripts', 'vendor',
-  'api', 'login', 'admin', 'about', 'privacy', 'terms', 'xiaowu', 'shushu',
+  'api', 'login', 'admin', 'about', 'privacy', 'terms', 'shushu',
 ]);
 
 const SAMPLE = {

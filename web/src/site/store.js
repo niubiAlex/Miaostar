@@ -160,12 +160,30 @@ export function renderHeader() {
 
 export const TOWN_HOUSES = 128;
 
+// 留给某只猫的房子：它还没来时空着，别的新猫不会住进去。
+const PINNED_HOUSES = { xiaowu: 2 };
+
+// 第 i 间房住谁（下标从 0 开始，空房是 undefined）。内置的猫在前，其余按入住时间，先来的房号小。
 export function residentsInOrder() {
-  return allCats();
+  const order = (cat) => (SAMPLE_CATS.some((sample) => sample.slug === cat.slug) ? '' : cat.createdAt || '9');
+  const cats = allCats().sort((a, b) => order(a).localeCompare(order(b)));
+  const slots = new Array(TOWN_HOUSES);
+  for (const cat of cats) {
+    const house = PINNED_HOUSES[cat.slug];
+    if (house) slots[house - 1] = cat;
+  }
+  const pinned = new Set(Object.values(PINNED_HOUSES).map((house) => house - 1));
+  let next = 0;
+  for (const cat of cats) {
+    if (PINNED_HOUSES[cat.slug]) continue;
+    while (next < TOWN_HOUSES && (pinned.has(next) || slots[next])) next += 1;
+    if (next < TOWN_HOUSES) slots[next] = cat;
+  }
+  return slots;
 }
 
 export function addressOf(cat) {
-  const index = residentsInOrder().findIndex((other) => other.slug === cat.slug);
+  const index = residentsInOrder().findIndex((other) => other?.slug === cat.slug);
   if (index < 0 || index >= TOWN_HOUSES) return null;
   const house = index + 1;
   return {
