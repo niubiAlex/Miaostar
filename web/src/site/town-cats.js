@@ -77,11 +77,34 @@ function along(route, distance) {
 
 const routeLength = (route) => route.slice(1).reduce((sum, to, index) => sum + Math.hypot(to[0] - route[index][0], to[1] - route[index][1]), 0);
 
+// When few real residents live here, pad the plaza with coat-only sprites so it still feels alive.
+// These are atmosphere only — they do not get cottages or profile pages.
+const COAT_PAD = ['orange', 'grey', 'black', 'white', 'tuxedo', 'siamese', 'sanhua'];
+
+function plazaPool(residents) {
+  const pool = residents.filter(spriteOf);
+  const looks = new Set(pool.map(spriteOf));
+  const need = SITTERS + SLEEPERS + WALKERS + 1;
+  if (pool.length >= need) return pool;
+  for (const coat of COAT_PAD) {
+    const look = `/assets/cats/coat_${coat}/plaza`;
+    if (looks.has(look)) continue;
+    pool.push({
+      slug: `plaza-${coat}`,
+      portrait: `/assets/site/cat_${coat}.jpg`,
+      animated: false,
+    });
+    looks.add(look);
+    if (pool.length >= need) break;
+  }
+  return pool;
+}
+
 export function startTownCats({ layer, rect, residents }) {
   const unit = rect[2] / 3840;
   const toWorld = ([x, y]) => [rect[0] + x * unit, rect[1] + y * unit];
   const size = SPRITE * unit;
-  const pool = residents.filter(spriteOf);
+  const pool = plazaPool(residents);
   const cats = new Set();
   const motions = new Map();
   let paused = false;
@@ -306,14 +329,27 @@ export function startTownCats({ layer, rect, residents }) {
     walker(cat).then(() => setTimeout(walkOn, between(3000, 12000)));
   }
 
+  // 陆续进场：先一只钓鱼，再每隔几秒多一只待着/睡着的，路过的猫也错开时间进来。
   fishOn();
   const spots = [...SPOTS].sort(() => Math.random() - 0.5);
-  for (let index = 0; index < SITTERS + SLEEPERS && spots.length > 0; index += 1) {
+  let seat = 0;
+  const seatTotal = SITTERS + SLEEPERS;
+  const seatNext = () => {
+    if (seat >= seatTotal || spots.length === 0) return;
     const cat = newcomer();
-    if (!cat) break;
+    if (!cat) {
+      setTimeout(seatNext, between(4000, 8000));
+      return;
+    }
+    const index = seat;
+    seat += 1;
     (index < SLEEPERS ? sleeper : sitter)(cat, spots.pop());
+    if (seat < seatTotal) setTimeout(seatNext, between(3500, 9000));
+  };
+  setTimeout(seatNext, between(800, 2500));
+  for (let index = 0; index < WALKERS; index += 1) {
+    setTimeout(walkOn, 6000 + index * between(5000, 12000));
   }
-  for (let index = 0; index < WALKERS; index += 1) setTimeout(walkOn, index * between(2500, 6000));
 
   return {
     // 镜头远到看不清猫、或者页面在后台时，视频都停下来，省电。

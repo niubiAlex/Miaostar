@@ -3,8 +3,9 @@
 // 滚轮、双指可以缩放，最远到整颗喵星铺满屏幕为止。
 // 一进来是整颗喵星，一路推近到城镇，再落到广场上。
 // 地址：/ 是广场，/house/12 是飞到 12 号屋并让它亮一下，之间飞过去不换页。
+import { skyAt } from '../schedule.js';
 import { runLoading } from './loading.js';
-import { lang, t } from './i18n.js';
+import { BRAND, lang, t } from './i18n.js';
 import { hideCards, mountSpots } from './scene.js';
 import {
   allCats, daysOnPlanet, displayName, displayOwner, ensureAuth, isOwner, renderHeader, residentsInOrder, statusOf, TOWN_HOUSES,
@@ -12,13 +13,71 @@ import {
 import { startTownCats } from './town-cats.js';
 
 await ensureAuth();
-await runLoading({ minMs: 2600 });
+await runLoading({ minMs: 1800 });
+
+// Static HTML was English-only; header uses i18n — paint the rest so one language stays consistent.
+function paintStaticCopy() {
+  const zh = lang() === 'zh';
+  document.documentElement.lang = zh ? 'zh-CN' : 'en';
+
+  const plaza = document.querySelector('.place-plaza');
+  if (plaza) {
+    plaza.querySelector('h1').textContent = zh ? BRAND.zh : BRAND.en;
+    plaza.querySelector('.brand-zh').textContent = zh ? BRAND.en : BRAND.zh;
+    plaza.querySelector('.lead-line').textContent = t('tagline');
+    document.getElementById('exploreTown').textContent = t('explore');
+    const send = plaza.querySelector('a.button.ghost');
+    if (send) send.textContent = t('send');
+  }
+
+  const overview = document.querySelector('.place-overview');
+  if (overview) {
+    overview.querySelector('h1').textContent = t('townTitle');
+    overview.querySelector('p').textContent = t('townHint');
+  }
+
+  const tipText = document.getElementById('worldTipText');
+  const tipClose = document.getElementById('worldTipClose');
+  if (tipText) tipText.textContent = t('tip');
+  if (tipClose) tipClose.textContent = t('tipClose');
+
+  const plazaLink = nav.querySelector('[data-go="plaza"]');
+  const overviewBtn = nav.querySelector('[data-go="overview"]');
+  const resetBtn = nav.querySelector('[data-go="reset"]');
+  if (plazaLink) plazaLink.textContent = t('backPlaza');
+  if (overviewBtn) overviewBtn.textContent = t('lookTown');
+  if (resetBtn) resetBtn.textContent = t('resetView');
+
+  const sheet = document.querySelector('section.sheet');
+  if (sheet) {
+    sheet.querySelector('h2').textContent = t('howTitle');
+    sheet.querySelector('.lead').textContent = t('howLead');
+    const steps = sheet.querySelectorAll('.steps div');
+    const pairs = [
+      [t('step1'), t('step1b')],
+      [t('step2'), t('step2b')],
+      [t('step3'), t('step3b')],
+    ];
+    steps.forEach((node, index) => {
+      const [title, body] = pairs[index] || [];
+      if (!title) return;
+      node.innerHTML = `<b>${title}</b>${body}`;
+    });
+  }
+}
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const view = document.getElementById('worldView');
 const canvas = document.getElementById('worldCanvas');
 const panel = document.getElementById('worldPanel');
 const nav = document.getElementById('worldNav');
+
+function applyWorldSky() {
+  const sky = skyAt(new Date());
+  if (view.dataset.sky !== sky.id) view.dataset.sky = sky.id;
+}
+applyWorldSky();
+setInterval(applyWorldSky, 60_000);
 const [town, houses] = await Promise.all(['/assets/world/town.json', '/assets/world/houses.json']
   .map(async (path) => (await fetch(path)).json()));
 const [WORLD_W, WORLD_H] = town.size;
@@ -53,6 +112,7 @@ const fromCenter = ([x, y, w = 0, h = 0]) => {
 const PLAZA = fromCenter([1300, 400, 1150, 890]);
 
 renderHeader();
+paintStaticCopy();
 const cats = allCats();
 const residents = residentsInOrder();
 
@@ -69,14 +129,14 @@ function houseSpots() {
     const number = index + 1;
     const id = `h${number}`;
     if (!cat) {
-      return { ...fraction(box), id, kind: 'house empty', href: '/new',
+      return { ...fraction(box), id, kind: 'house empty', href: `/house/${number}`,
         title: zh ? `${number} 号 · 空屋` : `No. ${number} · Empty`,
         lines: [zh ? '等一只猫搬进来' : 'Waiting for a cat'], action: t('sendHere') };
     }
     const name = displayName(cat);
     const owner = displayOwner(cat);
     return {
-      ...fraction(box), id, kind: `house${isOwner(cat) ? ' mine' : ''}`, href: `/${cat.slug}`, image: cat.portrait,
+      ...fraction(box), id, kind: `house${isOwner(cat) ? ' mine' : ''}`, href: `/house/${number}`, image: cat.portrait,
       title: zh
         ? `${number} 号 · ${name}${isOwner(cat) ? '（你的猫）' : ''}`
         : `No. ${number} · ${name}${isOwner(cat) ? ' (yours)' : ''}`,
@@ -156,8 +216,8 @@ function render() {
   const near = Math.min(Math.max((z / overviewZoom() - 0.3) / 0.3, 0), 1);
   canvas.style.setProperty('--detail', near);
   for (const element of details) element.classList.toggle('off', near === 0);
-  // 猫在屏幕上小于十来个像素就看不清了，不画也不放视频。
-  const catsVisible = z * PLAZA[2] > 260;
+  // 猫在屏幕上太小时不画；门槛略放宽，广场视角更容易看见它们。
+  const catsVisible = z * PLAZA[2] > 180;
   catLayer.classList.toggle('off', !catsVisible);
   townCats?.setPaused(!catsVisible || document.hidden);
   // 里一层已经铺满整个视口时，外面的层看不到，不用画。
@@ -256,11 +316,13 @@ const pathOf = (target) => (target.kind === 'house' ? `/house/${target.number}` 
 
 function describe(target) {
   if (target.kind !== 'house') {
-    document.title = '喵星 · 每一只离开的猫，都去了喵星';
+    document.title = 'Cat Planet · 喵星';
     return;
   }
   const cat = residents[target.number - 1];
-  document.title = `喵城镇 ${target.number} 号 · 喵星`;
+  document.title = cat
+    ? `${displayName(cat)} · Cat Planet`
+    : `Cat Town No. ${target.number} · Cat Planet`;
   const zh = lang() === 'zh';
   document.getElementById('houseName').textContent = cat
     ? (zh ? `${target.number} 号 · ${displayName(cat)}` : `No. ${target.number} · ${displayName(cat)}`)
@@ -280,6 +342,8 @@ function describe(target) {
 function updateLinks(target) {
   nav.querySelector('[data-go="plaza"]').hidden = target.kind === 'plaza';
   nav.querySelector('[data-go="overview"]').hidden = target.kind === 'overview';
+  const reset = nav.querySelector('[data-go="reset"]');
+  if (reset) reset.hidden = target.kind === 'plaza';
 }
 
 // 视口里被挡住的部分：桌面上左边是说明文字，手机上上面是文字；底下是按钮。
@@ -289,9 +353,15 @@ function insets(target) {
   const box = panel.getBoundingClientRect();
   const outer = view.getBoundingClientRect();
   if (width > 860 && target.kind !== 'overview') {
-    return { left: box.right - outer.left + 16, right: 16, top: 16, bottom: navHeight };
+    // Panel sits top-left; keep town visible to the right and below.
+    return {
+      left: Math.min(box.right - outer.left + 12, width * 0.38),
+      right: 16,
+      top: 16,
+      bottom: navHeight,
+    };
   }
-  return { left: 0, right: 0, top: Math.min(box.bottom - outer.top + 4, height * 0.45), bottom: navHeight };
+  return { left: 0, right: 0, top: Math.min(box.bottom - outer.top + 8, height * 0.36), bottom: navHeight };
 }
 
 function cameraFor(target) {
@@ -354,6 +424,20 @@ nav.querySelector('[data-go="overview"]').addEventListener('click', () => {
   panel.classList.remove('shown');
   showPanel(place);
   flyTo(cameraFor(place)).then(() => panel.classList.add('shown'));
+});
+nav.querySelector('[data-go="reset"]')?.addEventListener('click', () => {
+  navigate('/');
+});
+document.getElementById('exploreTown')?.addEventListener('click', () => {
+  const tip = document.getElementById('worldTip');
+  if (tip && !localStorage.getItem('catplanet:tip')) tip.hidden = false;
+  const firstHouse = spotLayer.querySelector('.spot.house:not(.empty)') || spotLayer.querySelector('.spot.house');
+  firstHouse?.focus({ preventScroll: true });
+  firstHouse?.classList.add('flash');
+});
+document.getElementById('worldTipClose')?.addEventListener('click', () => {
+  localStorage.setItem('catplanet:tip', '1');
+  document.getElementById('worldTip').hidden = true;
 });
 addEventListener('popstate', () => go(parse(location.pathname)));
 addEventListener('resize', () => {
@@ -458,14 +542,42 @@ function release(event) {
 }
 addEventListener('pointerup', release);
 addEventListener('pointercancel', release);
+// 空白处点击：看整颗星 → 城镇 → 广场（点中间的星球/城镇，层层推进）。
 view.addEventListener('click', (event) => {
   if (dragged) {
     event.preventDefault();
     event.stopPropagation();
+    return;
+  }
+  if (event.target.closest('a, button, .world-panel, .world-nav, .world-tip, .spot-sheet, .spot-card')) return;
+
+  const townZ = overviewZoom();
+  const plazaZ = cameraFor({ kind: 'plaza' }).z;
+  const point = worldPoint(event.clientX, event.clientY);
+  const nearCenter = Math.hypot(point.x - WORLD_W / 2, point.y - WORLD_H / 2) < Math.max(WORLD_W, WORLD_H) * 0.42;
+
+  // Far out (planet / clouds): click the center world to frame the town.
+  if (camera.z < townZ * 1.2) {
+    if (!nearCenter) return;
+    event.preventDefault();
+    place = { kind: 'overview' };
+    panel.classList.remove('shown');
+    showPanel(place);
+    flyTo(cameraFor(place)).then(() => {
+      if (place?.kind === 'overview') panel.classList.add('shown');
+    });
+    return;
+  }
+
+  // Town framed (or overview mode): click again to drop into the plaza.
+  if (place?.kind === 'overview' || camera.z < plazaZ * 0.82) {
+    if (!nearCenter && place?.kind !== 'overview') return;
+    event.preventDefault();
+    navigate('/');
   }
 }, true);
 
-// ---------- 开场：整颗喵星 → 喵城镇 → 落到广场（或要去的那间屋） ----------
+// ---------- 开场：直接落到有小屋的广场（云海作远景，不再独占首屏） ----------
 const first = parse(location.pathname);
 history.replaceState(null, '', pathOf(first) + location.hash);
 function startCats() {
@@ -473,36 +585,14 @@ function startCats() {
   render();
 }
 async function intro() {
-  if (reducedMotion) {
-    go(first, { animate: false }).then(() => panel.classList.add('shown'));
-    startCats();
-    return;
-  }
-  const overview = fit([0, 0, WORLD_W, WORLD_H], { left: 0, right: 0, top: 0, bottom: 0 });
-  camera = clampCamera({ x: WORLD_W / 2, y: WORLD_H / 2, z: 0 });
-  render();
-  view.classList.add('intro');
-  let skipped = false;
-  const skip = () => {
-    skipped = true;
-    if (flight) flight.cancel();
-    view.classList.remove('intro');
-    go(first, { animate: false });
-    startCats();
-  };
-  view.addEventListener('pointerdown', skip, { once: true });
-  // 所有图先解码好再动，动画途中才不会卡一下。
   await Promise.all([...view.querySelectorAll('img')].map((img) => img.decode().catch(() => {})));
-  await new Promise((resolve) => setTimeout(resolve, 500));
-  if (skipped) return;
-  await flyTo(overview, { duration: 2800 });
-  if (skipped) return;
   startCats();
-  await new Promise((resolve) => setTimeout(resolve, 350));
-  if (skipped) return;
-  view.removeEventListener('pointerdown', skip);
-  view.classList.remove('intro');
-  await go(first);
+  // Land on plaza/house immediately so the town is visible on first paint (no cloud-sea takeover).
+  await go(first, { animate: false });
+  if (!localStorage.getItem('catplanet:tip')) {
+    const tip = document.getElementById('worldTip');
+    if (tip) tip.hidden = false;
+  }
 }
 document.getElementById('residentCount').textContent = t('residentCount', cats.length);
 intro();

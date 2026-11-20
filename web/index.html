@@ -4,20 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Cat Planet · 喵星</title>
-    <meta name="description" content="Every cat that left us went to Cat Planet. A quiet memorial place for the cats we love." />
+    <meta name="description" content="Every cat that left us went to Cat Planet. A quiet place to visit their little home." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/site.css" />
-    <link rel="preload" as="image" href="/assets/world/zoom2.webp" />
-    <link rel="preload" as="image" href="/assets/world/zoom1.webp" />
     <link rel="preload" as="image" href="/assets/world/world.webp" />
+    <link rel="preload" as="image" href="/assets/world/mid.webp" />
+    <link rel="preload" as="image" href="/assets/world/center.webp" />
   </head>
   <body class="world-page booting">
     <header id="siteHeader" class="site-header"></header>
 
     <main class="world">
-      <div id="worldView" class="world-view">
+      <div id="worldView" class="world-view" data-sky="noon">
+        <div class="world-sky" aria-hidden="true"></div>
         <div id="worldCanvas" class="world-canvas">
           <img class="world-layer" data-layer="zoom2" src="/assets/world/zoom2.webp" alt="" />
           <img class="world-layer" data-layer="zoom1" src="/assets/world/zoom1.webp" alt="" />
@@ -31,31 +32,35 @@
         <div class="place place-plaza">
           <h1>Cat Planet</h1>
           <p class="brand-zh">喵星</p>
-          <p>Every cat that left us went to Cat Planet.<span class="long"><br />Here it has a little home — to sleep, bask in the sun, and wait for you to visit.</span></p>
-          <a class="button" href="/new">Send a cat (free)</a>
-          <ul class="plaza-legend">
-            <li><b>Cardboard Hill</b> new cats arrive in boxes</li>
-            <li><b>Lookout Tower</b> see every resident</li>
-            <li><b>Lake of Remembrance</b> lanterns lit for cats</li>
-            <li><b>Plaza cats</b> fishing, stretching, sunning</li>
-            <li><b>Cottages</b> one per cat — tap to visit</li>
-          </ul>
-          <p class="small long" id="residentCount"></p>
+          <p class="lead-line">Every cat that left us has a little home here.</p>
+          <div class="actions">
+            <button type="button" class="button" id="exploreTown">Explore the town</button>
+            <a class="button ghost" href="/new">Send a cat</a>
+          </div>
+          <p class="small" id="residentCount"></p>
         </div>
         <div class="place place-house">
           <h1 id="houseName"></h1>
-          <p class="small" id="houseLine"></p>
-          <a class="button" id="houseLink" href="/new"></a>
+          <p class="lead-line small" id="houseLine"></p>
+          <div class="actions">
+            <a class="button" id="houseLink" href="/new"></a>
+          </div>
         </div>
         <div class="place place-overview">
           <h1>Our cat town</h1>
-          <p class="small">Tap a cottage, or zoom out to see all of Cat Planet</p>
+          <p class="small">Tap a marked cottage, or reset to the plaza</p>
         </div>
       </section>
 
+      <p id="worldTip" class="world-tip" hidden>
+        <span id="worldTipText">Drag to look around. Tap a marked cottage to visit.</span>
+        <button type="button" id="worldTipClose">Got it</button>
+      </p>
+
       <nav id="worldNav" class="world-nav">
         <a data-go="plaza" href="/">Back to plaza</a>
-        <button type="button" data-go="overview">See the whole town</button>
+        <button type="button" data-go="overview">See whole town</button>
+        <button type="button" data-go="reset">Reset view</button>
       </nav>
     </main>
 

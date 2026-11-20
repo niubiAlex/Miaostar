@@ -51,34 +51,53 @@ export function mountSpots(stage, spots) {
       left: `${spot.x * 100}%`, top: `${spot.y * 100}%`, width: `${spot.w * 100}%`, height: `${spot.h * 100}%`,
     });
     if (spot.id) link.id = spot.id;
+    link.tabIndex = 0;
     if (!touchOnly) {
       link.addEventListener('mouseenter', () => showCard(link, spot));
       link.addEventListener('mouseleave', () => {
         card.hidden = true;
       });
+      link.addEventListener('focus', () => showCard(link, spot));
+      link.addEventListener('blur', () => {
+        card.hidden = true;
+      });
     }
+    const openSheet = () => {
+      sheet.innerHTML = `<button type="button" class="close" aria-label="Close">×</button>${cardHtml(spot)}
+        <a class="button" href="${spot.href}">${escapeHtml(spot.action ?? 'Visit')}</a>`;
+      sheet.hidden = false;
+      const closeBtn = sheet.querySelector('.close');
+      closeBtn.focus();
+      closeBtn.addEventListener('click', () => {
+        sheet.hidden = true;
+        link.focus();
+      });
+      sheet.querySelector('.button').addEventListener('click', (buttonEvent) => {
+        sheet.hidden = true;
+        if (spot.onClick) {
+          buttonEvent.preventDefault();
+          spot.onClick();
+        }
+      });
+    };
     link.addEventListener('click', (event) => {
       if (touchOnly) {
         event.preventDefault();
-        sheet.innerHTML = `<button type="button" class="close" aria-label="关闭">×</button>${cardHtml(spot)}
-          <a class="button" href="${spot.href}">${escapeHtml(spot.action ?? '去看看')}</a>`;
-        sheet.hidden = false;
-        sheet.querySelector('.close').addEventListener('click', () => {
-          sheet.hidden = true;
-        });
-        sheet.querySelector('.button').addEventListener('click', (buttonEvent) => {
-          sheet.hidden = true;
-          if (spot.onClick) {
-            buttonEvent.preventDefault();
-            spot.onClick();
-          }
-        });
+        openSheet();
         return;
       }
+      // Desktop house spots go to house camera first via in-page /house/N links.
       card.hidden = true;
       if (spot.onClick) {
         event.preventDefault();
         spot.onClick();
+      }
+    });
+    link.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      if (touchOnly || spot.kind?.includes('house')) {
+        event.preventDefault();
+        openSheet();
       }
     });
     stage.append(link);

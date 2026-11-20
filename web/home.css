@@ -37,6 +37,74 @@ body {
   container-type: inline-size;
 }
 
+/* 昼夜光：叠一层色罩 + 微调房间亮度，夜里不再像永远晌午。 */
+.stage::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transition: background 1.2s ease, opacity 1.2s ease;
+}
+
+.stage[data-sky='dawn']::after {
+  background: linear-gradient(180deg, rgba(255, 186, 140, 0.35), rgba(255, 220, 190, 0.12) 55%, rgba(180, 200, 230, 0.08));
+  opacity: 1;
+  mix-blend-mode: soft-light;
+}
+
+.stage[data-sky='morning']::after {
+  background: rgba(255, 236, 200, 0.18);
+  opacity: 1;
+  mix-blend-mode: soft-light;
+}
+
+.stage[data-sky='noon']::after {
+  opacity: 0;
+}
+
+.stage[data-sky='afternoon']::after {
+  background: rgba(255, 210, 150, 0.16);
+  opacity: 1;
+  mix-blend-mode: soft-light;
+}
+
+.stage[data-sky='dusk']::after {
+  background: linear-gradient(180deg, rgba(255, 140, 70, 0.28), rgba(80, 50, 90, 0.22));
+  opacity: 1;
+}
+
+.stage[data-sky='night']::after {
+  background: linear-gradient(180deg, rgba(30, 40, 90, 0.55), rgba(12, 18, 48, 0.62));
+  opacity: 1;
+}
+
+.stage[data-sky='dawn'] .room,
+.stage[data-sky='dawn'] .prop,
+.stage[data-sky='dawn'] .cat {
+  filter: brightness(0.95) saturate(1.05);
+}
+
+.stage[data-sky='dusk'] .room,
+.stage[data-sky='dusk'] .prop,
+.stage[data-sky='dusk'] .cat {
+  filter: brightness(0.82) saturate(1.08) hue-rotate(-8deg);
+}
+
+.stage[data-sky='night'] .room,
+.stage[data-sky='night'] .prop,
+.stage[data-sky='night'] .cat {
+  filter: brightness(0.58) saturate(0.75);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage::after {
+    transition: none;
+  }
+}
+
 /* 背景图是 576×1024，只露出中间 720 高的一段（上面裁掉 152）。 */
 .room {
   position: absolute;
@@ -45,6 +113,7 @@ body {
   width: 100%;
   user-select: none;
   pointer-events: none;
+  transition: filter 1.2s ease;
 }
 
 .prop {

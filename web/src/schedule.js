@@ -64,3 +64,24 @@ export function phaseAt(tier, date) {
   }
   return { id, ...PHASES[id] };
 }
+
+// 天空/室内光线：跟真实时钟走（和猫作息共用同一天），只改观感，不改行为。
+// dawn → morning → noon → afternoon → dusk → night
+const SKY = {
+  dawn: { id: 'dawn', label: '破晓', labelEn: 'Dawn' },
+  morning: { id: 'morning', label: '早晨', labelEn: 'Morning' },
+  noon: { id: 'noon', label: '中午', labelEn: 'Noon' },
+  afternoon: { id: 'afternoon', label: '午后', labelEn: 'Afternoon' },
+  dusk: { id: 'dusk', label: '傍晚', labelEn: 'Dusk' },
+  night: { id: 'night', label: '夜里', labelEn: 'Night' },
+};
+
+export function skyAt(date = new Date()) {
+  const hour = date.getHours() + date.getMinutes() / 60;
+  if (hour >= 5 && hour < 7.5) return SKY.dawn;
+  if (hour >= 7.5 && hour < 11) return SKY.morning;
+  if (hour >= 11 && hour < 15) return SKY.noon;
+  if (hour >= 15 && hour < 17.5) return SKY.afternoon;
+  if (hour >= 17.5 && hour < 19.5) return SKY.dusk;
+  return SKY.night;
+}

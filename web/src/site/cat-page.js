@@ -1,4 +1,4 @@
-// Cat page: room above, story / lanterns / messages below.
+// Cat page: room first, story second, dossier third.
 import { getCat } from './auth.js';
 import { lang } from './i18n.js';
 import {
@@ -50,29 +50,12 @@ function messagesHtml(cat) {
   </li>`).join('');
 }
 
-function socialHtml(cat) {
-  const zh = lang() === 'zh';
-  const name = displayName(cat);
-  return `<div class="candle">
-      <button type="button" class="button" id="lightButton" ${cat.lit ? 'disabled' : ''}>
-        ${cat.lit ? (zh ? '已为它点灯' : 'Lantern lit') : (zh ? `为${escapeHtml(name)}点一盏灯` : `Light a lantern for ${escapeHtml(name)}`)}</button>
-      <span class="count">${zh ? `已经有 ${cat.lights} 盏灯` : `${cat.lights} lanterns`}</span>
-    </div>
-    <ul class="messages">${messagesHtml(cat)}</ul>
-    <form class="message-form" id="messageForm">
-      <input name="text" maxlength="120" placeholder="${zh ? `对${escapeHtml(name)}说一句话` : `Say something to ${escapeHtml(name)}`}" required />
-      <button type="submit" class="button">${zh ? '留言' : 'Send'}</button>
-    </form>`;
-}
-
-function renderSocial(cat) {
-  const section = root.querySelector('#social');
-  section.innerHTML = socialHtml(cat);
-  section.querySelector('#lightButton').addEventListener('click', () => {
+function bindSocial(cat) {
+  root.querySelector('#lightButton')?.addEventListener('click', () => {
     lightCandle(cat.slug);
     render(findCat(cat.slug) || cat);
   });
-  section.querySelector('#messageForm').addEventListener('submit', (event) => {
+  root.querySelector('#messageForm')?.addEventListener('submit', (event) => {
     event.preventDefault();
     const text = new FormData(event.target).get('text').trim();
     if (!text) return;
@@ -85,7 +68,8 @@ function render(cat) {
   const zh = lang() === 'zh';
   if (!cat) {
     document.title = zh ? '喵星 · 找不到这只猫' : 'Cat Planet · Cat not found';
-    root.innerHTML = `<h2>${zh ? `喵星上还没有 /${escapeHtml(slug)}` : `No cat at /${escapeHtml(slug)} yet`}</h2>
+    root.innerHTML = `<a class="home-back" href="/">${zh ? '← 回喵城镇' : '← Back to town'}</a>
+      <h1>${zh ? `喵星上还没有 /${escapeHtml(slug)}` : `No cat at /${escapeHtml(slug)} yet`}</h1>
       <p class="lead">${zh ? '也许它还在来的路上。' : 'Maybe it is still on the way.'}</p>
       <a class="button" href="/new">${zh ? '送它来喵星' : 'Send a cat'}</a>`;
     return;
@@ -95,39 +79,55 @@ function render(cat) {
   document.title = `${name} · ${owner} · Cat Planet`;
   const owned = isOwner(cat);
   const address = addressOf(cat);
+  const backHref = address?.href || '/';
+  const status = statusOf(cat);
+
   root.innerHTML = `
-    <div class="profile-head">
-      <img src="${cat.portrait}" alt="" />
+    <a class="home-back" href="${backHref}">${zh ? '← 回喵城镇' : '← Back to town'}</a>
+
+    <div class="home-stage">${roomHtml(cat, owned)}</div>
+
+    <div class="home-identity">
       <div>
         <h1>${escapeHtml(name)}</h1>
-        <div class="sub">${escapeHtml(owner)}${zh ? '的猫' : "'s cat"} · ${zh ? `来喵星第 ${daysOnPlanet(cat)} 天` : `Day ${daysOnPlanet(cat)} on Cat Planet`}</div>
+        <p class="status">${escapeHtml(status.text)}</p>
+        <p class="owner-line">${escapeHtml(owner)}${zh ? '的猫' : "'s cat"} · ${zh ? `来喵星第 ${daysOnPlanet(cat)} 天` : `Day ${daysOnPlanet(cat)}`}</p>
       </div>
     </div>
-    <div class="profile-grid">
-      <div>${roomHtml(cat, owned)}</div>
-      <div>
-        <section class="card">
-          <h3>${zh ? `关于${escapeHtml(name)}` : `About ${escapeHtml(name)}`}</h3>
-          <dl class="facts">
-            ${cat.coat ? `<dt>${zh ? '花色' : 'Coat'}</dt><dd>${escapeHtml(cat.coat)}</dd>` : ''}
-            ${cat.birthday ? `<dt>${zh ? '生日' : 'Birthday'}</dt><dd>${formatDate(cat.birthday)}</dd>` : ''}
-            ${cat.homeDay ? `<dt>${zh ? '来到家里' : 'Came home'}</dt><dd>${formatDate(cat.homeDay)}</dd>` : ''}
-            <dt>${zh ? '来到喵星' : 'Arrived'}</dt><dd>${formatDate(cat.planetDay)}</dd>
-            ${address ? `<dt>${zh ? '住址' : 'Address'}</dt><dd><a href="${address.href}">${escapeHtml(address.text)}</a></dd>` : ''}
-          </dl>
-        </section>
-        <section class="card" id="social"></section>
-      </div>
+
+    <div class="home-actions">
+      <button type="button" class="button" id="lightButton" ${cat.lit ? 'disabled' : ''}>
+        ${cat.lit ? (zh ? '已为它点灯' : 'Lantern lit') : (zh ? `为${escapeHtml(name)}点一盏灯` : `Light a lantern for ${escapeHtml(name)}`)}
+      </button>
+      <span class="count">${zh ? `已经有 ${cat.lights} 盏灯` : `${cat.lights} lanterns`}</span>
     </div>
-    ${cat.story?.length ? `<section class="card story" style="margin-top: 24px">
-      <h3>${zh ? `${escapeHtml(owner)}写给${escapeHtml(name)}的话` : `From ${escapeHtml(owner)}`}</h3>
+
+    ${cat.story?.length ? `<section class="home-story">
+      <h2>${zh ? `${escapeHtml(owner)}写给${escapeHtml(name)}的话` : `From ${escapeHtml(owner)}`}</h2>
       ${cat.story.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
     </section>` : ''}
-    ${cat.timeline?.length ? `<section class="card">
-      <h3>${zh ? '我们的日子' : 'Our days'}</h3>
-      <ol class="timeline">${cat.timeline.map((item) => `<li><time>${formatDate(item.date)}</time>${escapeHtml(item.text)}</li>`).join('')}</ol>
-    </section>` : ''}`;
-  renderSocial(cat);
+
+    <section class="home-dossier">
+      <h2>${zh ? '档案' : 'Details'}</h2>
+      <dl class="facts">
+        ${cat.coat ? `<dt>${zh ? '花色' : 'Coat'}</dt><dd>${escapeHtml(cat.coat)}</dd>` : ''}
+        ${cat.birthday ? `<dt>${zh ? '生日' : 'Birthday'}</dt><dd>${formatDate(cat.birthday)}</dd>` : ''}
+        ${cat.homeDay ? `<dt>${zh ? '来到家里' : 'Came home'}</dt><dd>${formatDate(cat.homeDay)}</dd>` : ''}
+        <dt>${zh ? '来到喵星' : 'Arrived'}</dt><dd>${formatDate(cat.planetDay)}</dd>
+        ${address ? `<dt>${zh ? '住址' : 'Address'}</dt><dd><a href="${address.href}">${escapeHtml(address.text)}</a></dd>` : ''}
+      </dl>
+      ${cat.timeline?.length ? `<ol class="timeline" style="margin-top:18px">${cat.timeline.map((item) => `<li><time>${formatDate(item.date)}</time>${escapeHtml(item.text)}</li>`).join('')}</ol>` : ''}
+    </section>
+
+    <section class="home-messages">
+      <h2>${zh ? '留言' : 'Messages'}</h2>
+      <ul class="messages">${messagesHtml(cat)}</ul>
+      <form class="message-form" id="messageForm">
+        <input name="text" maxlength="120" placeholder="${zh ? `对${escapeHtml(name)}说一句话` : `Say something to ${escapeHtml(name)}`}" required />
+        <button type="submit" class="button ghost">${zh ? '留言' : 'Send'}</button>
+      </form>
+    </section>`;
+  bindSocial(cat);
 }
 
 let cat = findCat(slug);

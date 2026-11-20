@@ -2,7 +2,7 @@
 // 平时它在屋里溜达：溜达片段里它是真的在画面里走一段（镜头不动，路线带弯），播完后网页把它的位置挪到终点。
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=4';
-import { MEALS, dayKey, phaseAt } from './schedule.js?v=4';
+import { MEALS, dayKey, phaseAt, skyAt } from './schedule.js?v=5';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
 const STAGE = { width: 576, height: 720 };
@@ -570,10 +570,17 @@ function chooseActivity(phase) {
   return pickWeighted(weights);
 }
 
+function applySky() {
+  const sky = skyAt(clock());
+  if (elements.stage.dataset.sky !== sky.id) elements.stage.dataset.sky = sky.id;
+}
+
 function showStatus(phase) {
   const time = clock().toTimeString().slice(0, 5);
+  const sky = skyAt(clock());
   const text = mealPending(phase) ? `等${params.has('visitor') ? '主人' : '你'}喂${MEALS[phase.meal]}` : phase.text;
-  elements.status.textContent = `${time} ${phase.label} · ${text}`;
+  elements.status.textContent = `${time} ${sky.label} · ${text}`;
+  applySky();
 }
 
 // 主循环：每一圈只做一小步，所以摸它、叫它最多等手头这一个片段。
@@ -672,7 +679,8 @@ async function start() {
   }
 
   window.homeDebug = { cat, wishes, playing, history, player, request, stroll, tier: TIER, clock };
-  // 一进来看到的是它这个时段该有的样子：该睡的睡在窝里，出去了的屋里空着。
+  // 一进来看到的是它这个时段该有的样子：该睡的睡在窝里，出去了的屋里空着；光线跟此刻钟点走。
+  applySky();
   const phase = phaseAt(TIER, clock());
   showStatus(phase);
   if (phase.out && TIER !== '99') {

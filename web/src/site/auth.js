@@ -85,6 +85,8 @@ export function openAuthModal({ mode = 'login' } = {}) {
     const modal = document.createElement('div');
     modal.id = 'authModal';
     modal.className = 'auth-modal';
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
     modal.innerHTML = `
       <div class="auth-card">
         <button type="button" class="auth-close" aria-label="Close">×</button>
@@ -92,7 +94,7 @@ export function openAuthModal({ mode = 'login' } = {}) {
         <p class="lead" data-lead></p>
         <form id="authForm" class="form">
           <label><span data-label-name>Your name</span><input name="name" maxlength="32" required /></label>
-          <label><span data-label-email>Email</span><input name="email" type="email" required /></input></label>
+          <label><span data-label-email>Email</span><input name="email" type="email" required /></label>
           <label><span data-label-password>Password</span><input name="password" type="password" minlength="6" required /></label>
           <p class="error" data-error hidden></p>
           <button type="submit" class="button" data-submit>Continue</button>
@@ -122,14 +124,20 @@ export function openAuthModal({ mode = 'login' } = {}) {
     };
     paint();
 
+    const previouslyFocused = document.activeElement;
     const close = (user = null) => {
       modal.remove();
+      if (previouslyFocused instanceof HTMLElement) previouslyFocused.focus();
       resolve(user);
     };
     modal.querySelector('.auth-close').onclick = () => close(null);
     modal.addEventListener('click', (event) => {
       if (event.target === modal) close(null);
     });
+    modal.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') close(null);
+    });
+    queueMicrotask(() => modal.querySelector(current === 'login' ? '[name=email]' : '[name=name]')?.focus());
     switchBtn.onclick = () => {
       current = current === 'login' ? 'register' : 'login';
       paint();

@@ -3,9 +3,13 @@ const STRINGS = {
   en: {
     brand: 'Cat Planet',
     brandZh: '喵星',
-    tagline: 'Every cat that left us went to Cat Planet.',
-    taglineLong: 'Here it has a little home — to sleep, bask in the sun, and wait for you to visit.',
-    send: 'Send a cat (free)',
+    tagline: 'Every cat that left us has a little home here.',
+    taglineLong: 'Come visit — they are living their days under these skies.',
+    send: 'Send a cat',
+    explore: 'Explore the town',
+    tip: 'Drag to look around. Tap a marked cottage to visit.',
+    tipClose: 'Got it',
+    resetView: 'Reset view',
     residents: 'Residents',
     about: 'About',
     login: 'Log in',
@@ -27,7 +31,7 @@ const STRINGS = {
     legendLake: 'Lake of Remembrance — lanterns lit for cats',
     legendCats: 'Plaza cats — fishing, stretching, sunning',
     legendHouses: 'Cottages — one per cat; tap to visit',
-    residentCount: (n) => `${n} cat${n === 1 ? '' : 's'} live on Cat Planet`,
+    residentCount: (n) => `${n} cat${n === 1 ? '' : 's'} on Cat Planet`,
     emptyHouse: 'Empty home',
     emptyLine: 'No cat lives here yet',
     sendHere: 'Send a cat here',
@@ -53,9 +57,13 @@ const STRINGS = {
   zh: {
     brand: '喵星',
     brandZh: '喵星',
-    tagline: '每一只离开的猫，都去了喵星。',
-    taglineLong: '它在这里有一间自己的小屋，睡觉、晒太阳、找朋友玩，等你回来看它。',
-    send: '送它来喵星（免费）',
+    tagline: '每一只离开的猫，都在这里有一间小屋。',
+    taglineLong: '回来看看它——它还在这里过日子。',
+    send: '送它来喵星',
+    explore: '去小镇看看',
+    tip: '拖动看看四周。点带标记的小屋，去它家。',
+    tipClose: '知道了',
+    resetView: '重置视角',
     residents: '居民',
     about: '关于',
     login: '登录',
@@ -124,3 +132,5 @@ export function toggleLang() {
 }
 
 export const BRAND = { en: 'Cat Planet', zh: '喵星' };
+
+// Always show both names as brand marks; page copy follows lang().
