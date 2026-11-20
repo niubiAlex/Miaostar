@@ -1,22 +1,21 @@
-# 喵星 · Miaostar
+# Cat Planet · 喵星
 
-每一只离开的猫，都去了喵星。
+Every cat that left us went to Cat Planet.
 
-中文名 **喵星**，英文 **Miaostar**。纪念猫咪的小站：城镇广场、小屋、点灯与留言。
+- **English (primary):** Cat Planet  
+- **Chinese:** 喵星  
+- **Domain:** [catplanet.online](https://catplanet.online)
 
-## 本地预览
+## Local
 
 ```bash
 cd web
+npm install
 python3 scripts/serve.py 5173
 ```
 
-打开 http://127.0.0.1:5173/
+API routes (`/api/*`) need Vercel (Blob token). Local static preview works for the town; auth/slug checks require `vercel dev` or a deploy.
 
-## 部署
+## Deploy
 
-静态站在 `web/`，托管在 Vercel。路由见 `web/vercel.json`。
-
-## 说明
-
-当前访客点灯、留言、新猫登记存在浏览器本地。小屋动画流水线在 `pipeline/`，尚未接到线上自动生成。
+Static + serverless APIs from `web/`, hosted on Vercel.

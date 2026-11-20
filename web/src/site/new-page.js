@@ -1,18 +1,32 @@
-// 送它来喵星：收照片和信息，先存在本机浏览器，跳到它的主页。
-// 云端生成接上后，这里会上传照片并创建小屋。
-import { addCat, login, me, renderHeader, slugTaken } from './store.js';
+// Send a cat: requires login; slug is auto-suggested and checked on the server.
+import { checkSlug, createCat, openAuthModal } from './auth.js';
+import { nextSlug, slugifyName, validSlug } from './slug.js';
+import { ensureAuth, me, renderHeader } from './store.js';
+import { t as tr } from './i18n.js';
 
-// 这些地址网站自己要用，不能当猫的主页名。
 const RESERVED = new Set(['cats', 'new', 'home', 'me', 'assets', 'src', 'site', 'concepts', 'scripts', 'vendor', 'api',
-  'login', 'admin']);
-const PHOTO_SIZE = 512; // 存进浏览器前缩到这么大，不然存不下
+  'login', 'admin', 'about', 'privacy', 'terms']);
+const PHOTO_SIZE = 512;
 const MAX_PHOTOS = 5;
+
+await ensureAuth();
+renderHeader();
 
 const form = document.getElementById('form');
 const errorBox = document.getElementById('error');
+const gate = document.getElementById('loginGate');
 let photos = [];
 
-if (me()) form.owner.value = me().name;
+function syncGate() {
+  const user = me();
+  if (gate) gate.hidden = Boolean(user);
+  form.hidden = !user;
+  if (user && form.owner) form.owner.value = user.name;
+}
+
+syncGate();
+document.getElementById('gateLogin')?.addEventListener('click', () => openAuthModal({ mode: 'login' }));
+document.getElementById('gateSignup')?.addEventListener('click', () => openAuthModal({ mode: 'register' }));
 
 function shrink(file) {
   return new Promise((resolve, reject) => {
@@ -31,53 +45,87 @@ function shrink(file) {
   });
 }
 
-form.photos.addEventListener('change', async () => {
+form.photos?.addEventListener('change', async () => {
   photos = await Promise.all([...form.photos.files].slice(0, MAX_PHOTOS).map(shrink));
   document.getElementById('photoPreview').innerHTML = photos.map((src) => `<img src="${src}" alt="" />`).join('');
 });
 
-function problem(data) {
-  if (photos.length === 0) return '请至少上传一张它的照片';
-  if (!data.name) return '请写上它的名字';
-  if (!data.owner) return '请写上你的名字';
-  if (!/^[a-z0-9-]{2,24}$/.test(data.slug)) return '主页地址只能用小写字母、数字和短横线，2 到 24 个字';
-  if (RESERVED.has(data.slug) || slugTaken(data.slug)) return `喵星/${data.slug} 已经有猫住了，换一个吧`;
-  if (!data.planetDay) return '请选择它来到喵星的日子';
+let slugTouched = false;
+form.name?.addEventListener('input', () => {
+  if (slugTouched) return;
+  form.slug.value = slugifyName(form.name.value);
+  void refreshSlugHint();
+});
+form.slug?.addEventListener('input', () => {
+  slugTouched = true;
+  void refreshSlugHint();
+});
+
+async function refreshSlugHint() {
+  const hint = document.getElementById('slugStatus');
+  if (!hint) return;
+  const slug = form.slug.value.trim().toLowerCase();
+  if (!validSlug(slug) || RESERVED.has(slug)) {
+    hint.textContent = tr('slugHint');
+    hint.dataset.state = '';
+    return;
+  }
+  const result = await checkSlug(slug);
+  if (result.taken) {
+    const alt = nextSlug(slugifyName(form.name.value || slug), (candidate) => candidate === slug);
+    hint.textContent = `${tr('slugTaken')} Try /${alt}`;
+    hint.dataset.state = 'bad';
+  } else {
+    hint.textContent = tr('slugSuggest');
+    hint.dataset.state = 'ok';
+  }
+}
+
+async function problem(data) {
+  if (!me()) return tr('needLogin');
+  if (photos.length === 0) return 'Please upload at least one photo';
+  if (!data.name) return 'Please enter the cat’s name';
+  if (!validSlug(data.slug) || RESERVED.has(data.slug)) return 'Address: 2–24 lowercase letters, numbers, hyphens';
+  const result = await checkSlug(data.slug);
+  if (result.taken) return tr('slugTaken');
+  if (!data.planetDay) return 'Please choose the day they arrived on Cat Planet';
   return null;
 }
 
-form.addEventListener('submit', (event) => {
+form.addEventListener('submit', async (event) => {
   event.preventDefault();
+  if (!me()) {
+    await openAuthModal({ mode: 'login' });
+    return;
+  }
   const data = Object.fromEntries([...new FormData(form)].filter(([key]) => key !== 'photos')
     .map(([key, value]) => [key, value.trim()]));
   data.slug = data.slug.toLowerCase();
-  const message = problem(data);
+  const message = await problem(data);
   errorBox.hidden = message === null;
   errorBox.textContent = message ?? '';
   if (message) return;
 
-  login(data.owner);
   const timeline = [
-    data.homeDay && { date: data.homeDay, text: '来到家里' },
-    { date: data.planetDay, text: '来到喵星' },
+    data.homeDay && { date: data.homeDay, text: 'Came home' },
+    { date: data.planetDay, text: 'Arrived on Cat Planet' },
   ].filter(Boolean);
-  addCat({
-    slug: data.slug,
-    name: data.name,
-    owner: data.owner,
-    tier: 'free',
-    portrait: photos[0],
-    coat: data.coat,
-    birthday: data.birthday,
-    homeDay: data.homeDay,
-    planetDay: data.planetDay,
-    story: data.story.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
-    timeline,
-    lights: 0,
-    messages: [],
-    generating: true,
-  });
-  location.href = `/${data.slug}`;
-});
 
-renderHeader();
+  try {
+    await createCat({
+      slug: data.slug,
+      name: data.name,
+      coat: data.coat,
+      birthday: data.birthday,
+      homeDay: data.homeDay,
+      planetDay: data.planetDay,
+      portrait: photos[0],
+      story: data.story.split(/\n\s*\n/).map((paragraph) => paragraph.trim()).filter(Boolean),
+      timeline,
+    });
+    location.href = `/${data.slug}`;
+  } catch (error) {
+    errorBox.hidden = false;
+    errorBox.textContent = error.message;
+  }
+});

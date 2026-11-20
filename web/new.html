@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>送它来喵星 · Miaostar</title>
+    <title>Send a cat · Cat Planet</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
@@ -13,45 +13,53 @@
     <header id="siteHeader" class="site-header"></header>
 
     <main class="sheet" style="margin-top: 32px">
-      <h2>送它来喵星</h2>
-      <p class="lead">免费。先留下照片和故事；小屋动画会陆续接上，做好了它的主页会更新。</p>
+      <h2>Send a cat to Cat Planet</h2>
+      <p class="lead">Free. Leave photos and a story first. Home animation will follow — we will update the page when it is ready.</p>
 
-      <form id="form" class="form" novalidate>
+      <div id="loginGate" class="login-gate">
+        <p>Please log in first — so we know which cats are yours.</p>
+        <div class="actions">
+          <button type="button" class="button" id="gateLogin">Log in</button>
+          <button type="button" class="button ghost" id="gateSignup">Sign up</button>
+        </div>
+      </div>
+
+      <form id="form" class="form" novalidate hidden>
         <label>
-          <span>它的照片（1 到 5 张）</span>
+          <span>Photos (1–5)</span>
           <input type="file" name="photos" accept="image/*" multiple />
-          <span class="hint">正脸、侧面、全身都有最好。照片目前保存在你的浏览器里。</span>
+          <span class="hint">Front, side, and full body if you can. Photos stay in your browser for now when previewing.</span>
           <div id="photoPreview" class="photos"></div>
         </label>
 
         <div class="row">
-          <label><span>它叫什么</span><input name="name" maxlength="12" placeholder="比如：小五" /></label>
-          <label><span>你的名字</span><input name="owner" maxlength="12" placeholder="主页上会写「谁的猫」" /></label>
+          <label><span>Cat’s name</span><input name="name" maxlength="12" placeholder="e.g. Xiaowu" /></label>
+          <label><span>Your name</span><input name="owner" maxlength="32" readonly /></label>
         </div>
 
         <label>
-          <span>它的主页地址</span>
-          <div class="slug-input"><span>喵星/</span><input name="slug" maxlength="24" placeholder="xiaowu" /></div>
-          <span class="hint">小写字母、数字或短横线，比如它名字的拼音。</span>
+          <span>Homepage address</span>
+          <div class="slug-input"><span>catplanet.online/</span><input name="slug" maxlength="24" placeholder="xiaowu" /></div>
+          <span class="hint" id="slugStatus">Suggested from the name — change it if you like. If taken, we will tell you.</span>
         </label>
 
         <div class="row">
-          <label><span>生日（可不填）</span><input type="date" name="birthday" /></label>
-          <label><span>来到家里的日子（可不填）</span><input type="date" name="homeDay" /></label>
-          <label><span>来到喵星的日子</span><input type="date" name="planetDay" /></label>
+          <label><span>Birthday (optional)</span><input type="date" name="birthday" /></label>
+          <label><span>Came home (optional)</span><input type="date" name="homeDay" /></label>
+          <label><span>Arrived on Cat Planet</span><input type="date" name="planetDay" /></label>
         </div>
 
-        <label><span>花色（可不填）</span><input name="coat" maxlength="20" placeholder="比如：三花、橘猫、黑白奶牛" /></label>
+        <label><span>Coat (optional)</span><input name="coat" maxlength="20" placeholder="e.g. calico, orange tabby" /></label>
 
         <label>
-          <span>你想对它说的话</span>
-          <textarea name="story" rows="6" maxlength="2000" placeholder="它是怎么来到你家的，它有什么小习惯，你最想念它的什么……"></textarea>
-          <span class="hint">空一行就是新的一段。</span>
+          <span>What you want to say</span>
+          <textarea name="story" rows="6" maxlength="2000" placeholder="How you met, little habits, what you miss…"></textarea>
+          <span class="hint">Blank line starts a new paragraph.</span>
         </label>
 
-        <p class="hint">提交即表示你已阅读 <a href="/terms">使用说明</a> 和 <a href="/privacy">隐私说明</a>。</p>
+        <p class="hint">By submitting you agree to the <a href="/terms">Terms</a> and <a href="/privacy">Privacy</a> notes.</p>
         <p id="error" class="error" hidden></p>
-        <button type="submit" class="button">送它来喵星</button>
+        <button type="submit" class="button">Send to Cat Planet</button>
       </form>
     </main>
 

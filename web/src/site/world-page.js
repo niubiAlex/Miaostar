@@ -3,11 +3,16 @@
 // 滚轮、双指可以缩放，最远到整颗喵星铺满屏幕为止。
 // 一进来是整颗喵星，一路推近到城镇，再落到广场上。
 // 地址：/ 是广场，/house/12 是飞到 12 号屋并让它亮一下，之间飞过去不换页。
+import { runLoading } from './loading.js';
+import { lang, t } from './i18n.js';
 import { hideCards, mountSpots } from './scene.js';
 import {
-  addressOf, allCats, daysOnPlanet, isOwner, renderHeader, residentsInOrder, statusOf, TOWN_HOUSES,
+  allCats, daysOnPlanet, displayName, displayOwner, ensureAuth, isOwner, renderHeader, residentsInOrder, statusOf, TOWN_HOUSES,
 } from './store.js';
 import { startTownCats } from './town-cats.js';
+
+await ensureAuth();
+await runLoading({ minMs: 2600 });
 
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const view = document.getElementById('worldView');
@@ -58,32 +63,47 @@ canvas.append(spotLayer);
 const fraction = ([x, y, w, h]) => ({ x: x / WORLD_W, y: y / WORLD_H, w: w / WORLD_W, h: h / WORLD_H });
 
 function houseSpots() {
+  const zh = lang() === 'zh';
   return houses.map((box, index) => {
     const cat = residents[index];
     const number = index + 1;
     const id = `h${number}`;
     if (!cat) {
-      return { ...fraction(box), id, kind: 'house empty', href: '/new', title: `${number} 号 · 空屋`,
-        lines: ['等一只猫搬进来'], action: '送它来喵星' };
+      return { ...fraction(box), id, kind: 'house empty', href: '/new',
+        title: zh ? `${number} 号 · 空屋` : `No. ${number} · Empty`,
+        lines: [zh ? '等一只猫搬进来' : 'Waiting for a cat'], action: t('sendHere') };
     }
+    const name = displayName(cat);
+    const owner = displayOwner(cat);
     return {
       ...fraction(box), id, kind: `house${isOwner(cat) ? ' mine' : ''}`, href: `/${cat.slug}`, image: cat.portrait,
-      title: `${number} 号 · ${cat.name}${isOwner(cat) ? '（你的猫）' : ''}`,
-      lines: [`${cat.owner}的猫 · 来喵星第 ${daysOnPlanet(cat)} 天`, statusOf(cat).text],
-      action: '去它家看看',
+      title: zh
+        ? `${number} 号 · ${name}${isOwner(cat) ? '（你的猫）' : ''}`
+        : `No. ${number} · ${name}${isOwner(cat) ? ' (yours)' : ''}`,
+      lines: [
+        zh ? `${owner}的猫 · 来喵星第 ${daysOnPlanet(cat)} 天` : `${owner}'s cat · Day ${daysOnPlanet(cat)}`,
+        statusOf(cat).text,
+      ],
+      action: zh ? '去它家看看' : 'Visit home',
     };
   });
 }
 
 function landmarkSpots() {
+  const zh = lang() === 'zh';
   const lights = cats.reduce((sum, cat) => sum + (cat.lights ?? 0), 0);
   return [
-    { ...fraction(fromCenter([2122, 594, 278, 244])), href: '/new', title: '纸箱山',
-      lines: ['新来的猫，都是坐纸箱来的', '送你的猫来喵星'], action: '送它来喵星' },
-    { ...fraction(fromCenter([1855, 397, 197, 290])), href: '/cats', title: '瞭望塔',
-      lines: [`在塔上看看所有 ${cats.length} 位居民`], action: '看看所有居民' },
-    { ...fraction(fromCenter([1623, 880, 591, 200])), href: '/cats', title: '思念湖',
-      lines: [`湖上漂着 ${lights} 盏灯，都是大家为猫点的`, '随便去看一只猫，为它点一盏'], action: '随便去看一只猫',
+    { ...fraction(fromCenter([2122, 594, 278, 244])), href: '/new', title: zh ? '纸箱山' : 'Cardboard Hill',
+      lines: zh ? ['新来的猫，都是坐纸箱来的', '送你的猫来喵星'] : ['New cats arrive in boxes', 'Send your cat to Cat Planet'],
+      action: t('send') },
+    { ...fraction(fromCenter([1855, 397, 197, 290])), href: '/cats', title: zh ? '瞭望塔' : 'Lookout Tower',
+      lines: [zh ? `在塔上看看所有 ${cats.length} 位居民` : `See all ${cats.length} residents`],
+      action: zh ? '看看所有居民' : 'See residents' },
+    { ...fraction(fromCenter([1623, 880, 591, 200])), href: '/cats', title: zh ? '思念湖' : 'Lake of Remembrance',
+      lines: zh
+        ? [`湖上漂着 ${lights} 盏灯，都是大家为猫点的`, '随便去看一只猫，为它点一盏']
+        : [`${lights} lanterns float here`, 'Visit a cat and light one'],
+      action: zh ? '随便去看一只猫' : 'Visit a cat',
       onClick: () => {
         location.href = `/${cats[Math.floor(Math.random() * cats.length)].slug}`;
       } },
@@ -241,13 +261,20 @@ function describe(target) {
   }
   const cat = residents[target.number - 1];
   document.title = `喵城镇 ${target.number} 号 · 喵星`;
-  document.getElementById('houseName').textContent = cat ? `${target.number} 号 · ${cat.name}` : `${target.number} 号 · 空屋`;
+  const zh = lang() === 'zh';
+  document.getElementById('houseName').textContent = cat
+    ? (zh ? `${target.number} 号 · ${displayName(cat)}` : `No. ${target.number} · ${displayName(cat)}`)
+    : (zh ? `${target.number} 号 · 空屋` : `No. ${target.number} · Empty`);
   document.getElementById('houseLine').textContent = cat
-    ? `${cat.owner}的猫 · 来喵星第 ${daysOnPlanet(cat)} 天 · ${statusOf(cat).text}`
-    : '还没有猫搬来，等一只猫住进来';
+    ? (zh
+      ? `${displayOwner(cat)}的猫 · 来喵星第 ${daysOnPlanet(cat)} 天 · ${statusOf(cat).text}`
+      : `${displayOwner(cat)}'s cat · Day ${daysOnPlanet(cat)} · ${statusOf(cat).text}`)
+    : t('emptyLine');
   const link = document.getElementById('houseLink');
   link.href = cat ? `/${cat.slug}` : '/new';
-  link.textContent = cat ? `去${cat.name}家看看` : '送它来喵星';
+  link.textContent = cat
+    ? (zh ? `去${displayName(cat)}家看看` : `Visit ${displayName(cat)}`)
+    : t('sendHere');
 }
 
 function updateLinks(target) {
@@ -477,5 +504,5 @@ async function intro() {
   view.classList.remove('intro');
   await go(first);
 }
-document.getElementById('residentCount').textContent = `已经有 ${cats.length} 只猫住在喵星`;
+document.getElementById('residentCount').textContent = t('residentCount', cats.length);
 intro();
