@@ -1,6 +1,7 @@
-// Cat page: room first, story second, dossier third.
+// Cat page: the room fills the first screen (name, lantern and sound float in it); story, details and messages below.
 import { fetchSocial, getCat, openAuthModal, postSocial, updateCat } from './auth.js';
 import { brand, lang, t } from './i18n.js';
+import { skyAt } from '../schedule.js';
 import { DEFAULT_VOICE, VOICES, createVoice, setSoundOn, soundOn } from './sound.js';
 import {
   addressOf, daysOnPlanet, displayName, displayOwner, ensureAuth, escapeHtml, findCat, formatDate,
@@ -9,11 +10,16 @@ import {
 
 const slug = decodeURIComponent(location.pathname.slice(1)).replace(/\/$/, '');
 const root = document.getElementById('profile');
+// ?hour=21 / ?weather=rain pass through to the room, for looking at other times of day.
+const pageParams = new URLSearchParams(location.search);
 
 await ensureAuth();
 renderHeader();
 
-function roomHtml(cat, owner) {
+// Built-in cats can be open to everyone (public); otherwise only the owner plays.
+const canPlay = (cat) => Boolean(cat.public) || isOwner(cat);
+
+function roomHtml(cat) {
   const zh = lang() === 'zh';
   const name = displayName(cat);
   if (cat.generating) {
@@ -28,23 +34,35 @@ function roomHtml(cat, owner) {
     return `<div class="room-static">
       <img src="${cat.portrait}" alt="" />
       <span class="badge">${zh ? '此刻' : 'Now'}: ${escapeHtml(statusOf(cat).text)}</span>
-    </div>
-    <p class="room-note">${zh ? '小屋动画还在路上' : 'Home animation is still on the way'}</p>`;
+    </div>`;
   }
   const params = new URLSearchParams({ tier: cat.tier, embed: '1', lang: zh ? 'zh' : 'en', voice: cat.voice || DEFAULT_VOICE });
   if (cat.assets) params.set('cat', cat.assets);
-  if (!owner) params.set('visitor', '1');
-  return `<iframe class="room-frame ${owner ? 'owner' : ''}" src="/home.html?${params}" title="${escapeHtml(name)}${zh ? ' 的小屋' : ' · home'}"></iframe>
-    <p class="room-note">${owner
-      ? (zh ? '这是你的猫，可以摸摸它、叫它、喂它。' : 'This is your cat — you can pet, call, and feed it.')
-      : (zh
-        ? `只有${escapeHtml(displayOwner(cat))}能和${escapeHtml(name)}互动，你可以看看它此刻在做什么。`
-        : `Only ${escapeHtml(displayOwner(cat))} can play with ${escapeHtml(name)}. You can watch what it is doing.`)}</p>`;
+  if (cat.bell) params.set('bell', '1');
+  if (!canPlay(cat)) params.set('visitor', '1');
+  for (const key of ['hour', 'weather']) if (pageParams.has(key)) params.set(key, pageParams.get(key));
+  return `<iframe class="room-frame" src="/home.html?${params}" title="${escapeHtml(name)}${zh ? ' 的小屋' : ' · home'}" allow="autoplay"></iframe>`;
+}
+
+function roomNote(cat) {
+  const zh = lang() === 'zh';
+  const name = escapeHtml(displayName(cat));
+  if (!cat.animated) return zh ? '小屋动画还在路上。' : 'Home animation is still on the way.';
+  if (cat.public) {
+    return zh
+      ? `${name}是大家的猫：谁来了都可以摸摸它、叫它、喂它。饭点它会等着有人来。`
+      : `${name} is everyone’s cat — anyone can pet, call, and feed them. Around mealtimes they wait for someone to come.`;
+  }
+  if (isOwner(cat)) return zh ? '这是你的猫，可以摸摸它、叫它、喂它。' : 'This is your cat — you can pet, call, and feed it.';
+  return zh
+    ? `只有${escapeHtml(displayOwner(cat))}能和${name}互动，你可以看看它此刻在做什么。`
+    : `Only ${escapeHtml(displayOwner(cat))} can play with ${name}. You can watch what it is doing.`;
 }
 
 // Built-in messages that came with the cat, then everyone's messages from the server.
 let social = { lights: 0, lit: false, messages: [] };
 let voice = null;
+let ambient = null;
 
 const lanternCount = (cat) => (cat.lights ?? 0) + social.lights;
 const allMessages = (cat) => [...(cat.messages ?? []), ...social.messages.map(localizeMessage)];
@@ -60,10 +78,11 @@ function messagesHtml(cat) {
 
 function lanternHtml(cat) {
   const name = escapeHtml(displayName(cat));
-  return `<button type="button" class="button" id="lightButton" ${social.lit ? 'disabled' : ''}>
-      ${social.lit ? t('lanternLit') : t('lightFor', name)}
+  return `<button type="button" class="scene-lantern-button" id="lightButton" ${social.lit ? 'disabled' : ''}>
+      <span class="lantern-icon ${social.lit ? 'lit' : ''}" aria-hidden="true"></span>
+      <span>${social.lit ? t('lanternLit') : t('lightFor', name)}</span>
     </button>
-    <span class="count" id="lightCount">${t('lanternCount', lanternCount(cat))}</span>`;
+    <span class="scene-count" id="lightCount">${t('lanternCount', lanternCount(cat))}</span>`;
 }
 
 function messageFormHtml(cat) {
@@ -79,8 +98,9 @@ function messageFormHtml(cat) {
 }
 
 function soundHtml() {
-  return `<button type="button" class="button ghost sound-toggle" id="soundToggle" aria-pressed="${soundOn()}">
-    ${soundOn() ? t('soundOn') : t('soundOff')}</button>`;
+  const on = soundOn();
+  return `<button type="button" class="scene-chip" id="soundToggle" aria-pressed="${on}">
+    <span class="sound-icon ${on ? 'on' : ''}" aria-hidden="true"></span>${on ? t('soundOn') : t('soundOff')}</button>`;
 }
 
 function voicePickerHtml(cat) {
@@ -99,10 +119,27 @@ function paintSocial(cat) {
     event.currentTarget.disabled = true;
     try {
       social = await postSocial(cat.slug, { action: 'light' });
+      if (soundOn()) voice?.play('bell');
     } catch {
       event.currentTarget.disabled = false;
     }
     paintSocial(cat);
+  });
+}
+
+function paintSound(cat) {
+  const box = root.querySelector('#soundBox');
+  if (!box) return;
+  box.innerHTML = soundHtml();
+  box.querySelector('#soundToggle').addEventListener('click', () => {
+    setSoundOn(!soundOn());
+    if (soundOn()) {
+      voice.ambient(ambient);
+      voice.play('meow');
+    } else {
+      voice.stop();
+    }
+    paintSound(cat);
   });
 }
 
@@ -138,13 +175,15 @@ function bindSocial(cat) {
   });
 
   voice = createVoice(cat.voice);
-  bindSoundToggle(cat);
+  paintSound(cat);
   root.querySelector('#voiceSelect')?.addEventListener('change', async (event) => {
     const next = event.target.value;
     try {
       const saved = await updateCat(cat.slug, { voice: next });
       cat.voice = saved.voice;
+      voice.stop();
       voice = createVoice(cat.voice);
+      if (soundOn()) voice.ambient(ambient);
       voice.play('meow');
       const frame = root.querySelector('.room-frame');
       if (frame) frame.src = frame.src.replace(/voice=[a-z]+/, `voice=${cat.voice}`);
@@ -155,81 +194,89 @@ function bindSocial(cat) {
   });
 }
 
-function bindSoundToggle(cat) {
-  root.querySelector('#soundToggle')?.addEventListener('click', (event) => {
-    setSoundOn(!soundOn());
-    event.currentTarget.outerHTML = soundHtml();
-    bindSoundToggle(cat);
-    if (soundOn()) voice.play('meow');
-  });
-}
-
 // The room iframe asks us to play its sounds: we hold the sound switch and the visitor's click.
 window.addEventListener('message', (event) => {
   if (event.origin !== location.origin || event.data?.type !== 'catplanet:sound') return;
   if (event.source !== root.querySelector('.room-frame')?.contentWindow) return;
-  if (soundOn() && voice) voice.play(event.data.kind);
+  if (event.data.kind === 'ambient') ambient = event.data.name;
+  if (soundOn() && voice) voice.play(event.data.kind, event.data.name);
 });
+
+// Sound can only start after a click; the first click anywhere on the page wakes the ambient up.
+window.addEventListener('pointerdown', () => {
+  if (soundOn() && voice && ambient) voice.ambient(ambient);
+}, { once: true });
 
 function render(cat) {
   const zh = lang() === 'zh';
   if (!cat) {
     document.title = zh ? '喵星 · 找不到这只猫' : 'Cat Planet · Cat not found';
-    root.innerHTML = `<a class="home-back" href="/">${zh ? '← 回喵城镇' : '← Back to town'}</a>
+    root.innerHTML = `<div class="home-body"><a class="home-back" href="/">${zh ? '← 回喵城镇' : '← Back to town'}</a>
       <h1>${zh ? `喵星上还没有 /${escapeHtml(slug)}` : `No cat at /${escapeHtml(slug)} yet`}</h1>
       <p class="lead">${zh ? '也许它还在来的路上。' : 'Maybe it is still on the way.'}</p>
-      <a class="button" href="/new">${zh ? '送它来喵星' : 'Send a cat'}</a>`;
+      <a class="button" href="/new">${zh ? '送它来喵星' : 'Send a cat'}</a></div>`;
     return;
   }
   const name = displayName(cat);
   const owner = displayOwner(cat);
   document.title = `${name} · ${brand()}`;
-  const owned = isOwner(cat);
   const address = addressOf(cat);
   const backHref = address?.href || '/';
-  const status = statusOf(cat);
+  const ownerLine = cat.public
+    ? (zh ? '大家的猫' : 'Everyone’s cat')
+    : `${escapeHtml(owner)}${zh ? '的猫' : "'s cat"}`;
 
   root.innerHTML = `
-    <a class="home-back" href="${backHref}">${zh ? '← 回喵城镇' : '← Back to town'}</a>
-
-    <div class="home-stage">${roomHtml(cat, owned)}</div>
-
-    <div class="home-identity">
-      <div>
-        <h1>${escapeHtml(name)}</h1>
-        <p class="status">${escapeHtml(status.text)}</p>
-        <p class="owner-line">${escapeHtml(owner)}${zh ? '的猫' : "'s cat"} · ${zh ? `来喵星第 ${daysOnPlanet(cat)} 天` : `Day ${daysOnPlanet(cat)}`}</p>
+    <section class="scene ${cat.animated ? 'live' : ''}">
+      <div class="scene-room">${roomHtml(cat)}</div>
+      <div class="scene-top">
+        <a class="scene-chip" href="${backHref}">${zh ? '← 回喵城镇' : '← Back to town'}</a>
+        ${cat.animated ? '<div id="soundBox"></div>' : ''}
       </div>
-    </div>
-
-    <div class="home-actions">
-      <div class="lantern-box" id="lanternBox"></div>
-      <div class="sound-box">${cat.animated ? soundHtml() : ''}${owned ? voicePickerHtml(cat) : ''}</div>
-    </div>
-
-    ${cat.story?.length ? `<section class="home-story">
-      <h2>${zh ? `${escapeHtml(owner)}写给${escapeHtml(name)}的话` : `From ${escapeHtml(owner)}`}</h2>
-      ${cat.story.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
-    </section>` : ''}
-
-    <section class="home-dossier">
-      <h2>${zh ? '档案' : 'Details'}</h2>
-      <dl class="facts">
-        ${cat.coat ? `<dt>${zh ? '花色' : 'Coat'}</dt><dd>${escapeHtml(cat.coat)}</dd>` : ''}
-        ${cat.birthday ? `<dt>${zh ? '生日' : 'Birthday'}</dt><dd>${formatDate(cat.birthday)}</dd>` : ''}
-        ${cat.homeDay ? `<dt>${zh ? '来到家里' : 'Came home'}</dt><dd>${formatDate(cat.homeDay)}</dd>` : ''}
-        <dt>${zh ? '来到喵星' : 'Arrived'}</dt><dd>${formatDate(cat.planetDay)}</dd>
-        ${address ? `<dt>${zh ? '住址' : 'Address'}</dt><dd><a href="${address.href}">${escapeHtml(address.text)}</a></dd>` : ''}
-      </dl>
-      ${cat.timeline?.length ? `<ol class="timeline" style="margin-top:18px">${cat.timeline.map((item) => `<li><time>${formatDate(item.date)}</time>${escapeHtml(item.text)}</li>`).join('')}</ol>` : ''}
+      <div class="scene-identity">
+        <h1>${escapeHtml(name)}</h1>
+        <p>${ownerLine} · ${zh ? `来喵星第 ${daysOnPlanet(cat)} 天` : `Day ${daysOnPlanet(cat)} on Cat Planet`}</p>
+      </div>
+      <div class="scene-lantern" id="lanternBox"></div>
     </section>
 
-    <section class="home-messages">
-      <h2>${zh ? '留言' : 'Messages'}</h2>
-      <ul class="messages" id="messageList"></ul>
-      ${messageFormHtml(cat)}
-    </section>`;
+    <div class="home-body">
+      <p class="room-note">${roomNote(cat)}</p>
+      ${isOwner(cat) ? `<div class="owner-tools">${voicePickerHtml(cat)}</div>` : ''}
+
+      ${cat.story?.length ? `<section class="home-story">
+        <h2>${cat.public ? (zh ? `关于${escapeHtml(name)}` : `About ${escapeHtml(name)}`)
+          : (zh ? `${escapeHtml(owner)}写给${escapeHtml(name)}的话` : `From ${escapeHtml(owner)}`)}</h2>
+        ${cat.story.map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`).join('')}
+      </section>` : ''}
+
+      <section class="home-dossier">
+        <h2>${zh ? '档案' : 'Details'}</h2>
+        <dl class="facts">
+          ${cat.coat ? `<dt>${zh ? '花色' : 'Coat'}</dt><dd>${escapeHtml(cat.coat)}</dd>` : ''}
+          ${cat.birthday ? `<dt>${zh ? '生日' : 'Birthday'}</dt><dd>${formatDate(cat.birthday)}</dd>` : ''}
+          ${cat.homeDay ? `<dt>${zh ? '来到家里' : 'Came home'}</dt><dd>${formatDate(cat.homeDay)}</dd>` : ''}
+          <dt>${zh ? '来到喵星' : 'Arrived'}</dt><dd>${formatDate(cat.planetDay)}</dd>
+          ${address ? `<dt>${zh ? '住址' : 'Address'}</dt><dd><a href="${address.href}">${escapeHtml(address.text)}</a></dd>` : ''}
+        </dl>
+        ${cat.timeline?.length ? `<ol class="timeline" style="margin-top:18px">${cat.timeline.map((item) => `<li><time>${formatDate(item.date)}</time>${escapeHtml(item.text)}</li>`).join('')}</ol>` : ''}
+      </section>
+
+      <section class="home-messages">
+        <h2>${zh ? '留言' : 'Messages'}</h2>
+        <ul class="messages" id="messageList"></ul>
+        ${messageFormHtml(cat)}
+      </section>
+    </div>`;
   bindSocial(cat);
+  const scene = root.querySelector('.scene');
+  const paintSky = () => {
+    const date = new Date();
+    if (pageParams.has('hour')) date.setHours(Number(pageParams.get('hour')), 0);
+    scene.dataset.sky = skyAt(date).id;
+  };
+  paintSky();
+  setInterval(paintSky, 60000);
 }
 
 let cat = findCat(slug);

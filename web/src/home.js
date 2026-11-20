@@ -2,8 +2,8 @@
 // 平时它在屋里溜达：溜达片段里它是真的在画面里走一段（镜头不动，路线带弯），播完后网页把它的位置挪到终点。
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=4';
-import { MEALS, MEALS_EN, dayKey, phaseAt, skyAt } from './schedule.js?v=6';
-import { createVoice } from './site/sound.js?v=1';
+import { MEALS, MEALS_EN, ambientAt, dayKey, phaseAt, skyAt, weatherAt } from './schedule.js?v=7';
+import { createVoice } from './site/sound.js?v=2';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
 const STAGE = { width: 576, height: 720 };
@@ -40,10 +40,13 @@ const L = (zh, en) => (ZH ? zh : en);
 const mealName = (meal) => (ZH ? MEALS : MEALS_EN)[meal];
 // 嵌在主页里时声音交给外面的页面放（它有开关，也拿得到访客的点击）；单独打开时自己放。
 const voice = params.has('embed') ? null : createVoice(params.get('voice'));
-function sound(kind) {
-  if (voice) voice.play(kind);
-  else window.parent.postMessage({ type: 'catplanet:sound', kind }, location.origin);
+function sound(kind, name) {
+  if (voice) voice.play(kind, name);
+  else window.parent.postMessage({ type: 'catplanet:sound', kind, name }, location.origin);
 }
+const HAS_BELL = params.has('bell');
+document.body.classList.toggle('embed', params.has('embed'));
+document.body.classList.toggle('visitor', params.has('visitor'));
 // 三个档位：免费只会睡觉；¥99 醒着陪你，待在屋子中间；¥299 全套，满屋走、出门。
 // activities 是这一档自己会做、也能让它去做的事；idles 是待着时的小动作和权重。
 const TIERS = {
@@ -289,6 +292,7 @@ async function walkLeg(direction, length, { committed = false, onStart } = {}) {
   // 还没迈步就有人摸它、叫它：不走了，连转身也省掉。
   if (!committed && wishPending()) return false;
   await face(direction);
+  if (HAS_BELL && Math.random() < 0.6) sound('bell');
   const walk = motion[`walk_${direction}`];
   const full = walk.distance * SPRITE;
   const last = walk.curve.length - 1;
@@ -356,6 +360,7 @@ async function stroll() {
   // 把溜达片段（画面是普通片段的 zoom 倍大）摆到起点正好落在它现在的落脚点上。
   const placement = (point) => `translate(${(FOOT.x - zoom * point[0]) * 100}%, ${(FOOT.y - zoom * point[1]) * 100}%) scale(${zoom})`;
   elements.cat.classList.add('strolling');
+  if (HAS_BELL && Math.random() < 0.6) sound('bell');
   const { video } = await playClip(name, { transform: placement(start) });
   // 画面停在终点；把它的位置挪到终点，同时把这个视频反着挪回去，画面上不动。
   cat.pos = { x: cat.pos.x + move[0], y: cat.pos.y + move[1] };
@@ -404,6 +409,7 @@ const ACTIVITIES = {
     say(isMeal
       ? pick(L([`${MEALS[meal]}来啦`, '终于开饭了', '好香'], [`${mealName(meal)} time!`, 'Finally, food', 'Smells good']))
       : pick(L(['加个餐', '嘿嘿，零食'], ['A little snack', 'Treats!'])));
+    sound('eat');
     await playClip('eat_bowl');
     if (isMeal) mealStore.setItem(fedKey(meal), String(Date.now()));
     elements.bowl.src = 'assets/home45/bowl_empty.png';
@@ -416,6 +422,7 @@ const ACTIVITIES = {
     await face('fl');
     if (wishPending()) return;
     say(pick(L(['球！', '看我的', '来玩呀'], ['Ball!', 'Watch this', 'Play with me'])));
+    sound('ball');
     await playClip('play_ball');
     cat.tiredness = Math.min(1, cat.tiredness + 0.08);
   },
@@ -437,6 +444,7 @@ const ACTIVITIES = {
     await face('fl');
     if (wishPending()) return hideProp('board');
     say(pick(L(['磨磨爪子', '嚓嚓嚓', '爪子痒了'], ['Sharpening claws', 'Scratch scratch', 'Itchy paws'])));
+    sound('scratch');
     await playClip('scratch');
     hideProp('board');
   },
@@ -534,7 +542,7 @@ async function comeBack() {
   cat.out = false;
   cat.tiredness = Math.min(1, cat.tiredness + 0.25);
   say(pick(L(['我回来啦', '外面真好玩', '回家啦'], ['I’m back', 'Outside was fun', 'Home again'])));
-  sound('meow');
+  sound('trill');
 }
 
 async function react(kind) {
@@ -575,7 +583,7 @@ async function react(kind) {
   // 被叫：睡着就醒过来，背对着就转过来，然后看向你应一声。
   await face('fl');
   say(pick(L(['喵？', '喵～', '在呢'], ['Meow?', 'Meow~', 'I’m here'])));
-  sound('meow');
+  sound(Math.random() < 0.4 ? 'trill' : 'meow');
   await playClip('called');
 }
 
@@ -590,9 +598,18 @@ function chooseActivity(phase) {
   return pickWeighted(weights);
 }
 
+let currentAmbient = null;
 function applySky() {
   const sky = skyAt(clock());
   if (elements.stage.dataset.sky !== sky.id) elements.stage.dataset.sky = sky.id;
+  document.body.dataset.sky = sky.id;
+  const weather = params.get('weather') ?? weatherAt(clock());
+  document.body.dataset.weather = weather;
+  const ambient = ambientAt(sky.id, weather);
+  if (ambient !== currentAmbient) {
+    currentAmbient = ambient;
+    sound('ambient', ambient);
+  }
 }
 
 function showStatus(phase) {
@@ -601,7 +618,8 @@ function showStatus(phase) {
   const text = mealPending(phase)
     ? L(`等${params.has('visitor') ? '主人' : '你'}喂${MEALS[phase.meal]}`, `Waiting for ${mealName(phase.meal)}`)
     : L(phase.text, phase.textEn);
-  elements.status.textContent = `${time} ${L(sky.label, sky.labelEn)} · ${text}`;
+  const rain = document.body.dataset.weather === 'rain' ? L(' · 下雨', ' · Raining') : '';
+  elements.status.textContent = `${time} ${L(sky.label, sky.labelEn)}${rain} · ${text}`;
   applySky();
 }
 
@@ -696,8 +714,6 @@ async function start() {
   elements.loading.hidden = true;
 
   // 嵌在猫猫主页里时：访客只能看，不能摸、不能叫；档位由主人买的那档决定，不给切换。
-  document.body.classList.toggle('embed', params.has('embed'));
-  document.body.classList.toggle('visitor', params.has('visitor'));
   if (!params.has('visitor')) elements.catHit.addEventListener('click', () => request('reaction', 'pet'));
   elements.callButton.addEventListener('click', () => {
     if (cat.out) say(SLEEPS_ONLY ? L('它在外面玩，早上回来', 'Out playing, back in the morning') : L('听见啦，这就回来', 'Heard you, coming home'), { x: 470, y: 250 });

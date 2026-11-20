@@ -19,8 +19,8 @@
         <h3>What works today</h3>
         <ul class="plain">
           <li>Walk the town and plaza</li>
-          <li>Visit Xiaowu’s home</li>
-          <li>Create an account, send a cat, and claim a unique address like /xiaowu</li>
+          <li>Visit Uncle at No. 1 — everyone’s cat; anyone can pet, call and feed him</li>
+          <li>Create an account, send a cat, and claim a unique address like /momo</li>
           <li>Light a lantern and leave a message in a cat’s home — everyone can see them</li>
           <li>Hear them: pick one of five real cat voices for meows and purrs</li>
         </ul>
@@ -35,8 +35,8 @@
         <h3>现在能做什么</h3>
         <ul class="plain">
           <li>逛喵城镇和广场</li>
-          <li>去小五家看看</li>
-          <li>注册账号，送你的猫来喵星，领一个专属地址，比如 /xiaowu</li>
+          <li>去 1 号看看叔叔，它是大家的猫，谁都可以摸它、叫它、喂它</li>
+          <li>注册账号，送你的猫来喵星，领一个专属地址，比如 /momo</li>
           <li>在猫的小屋里点灯、留言，大家都能看到</li>
           <li>听它的声音：五种真猫录音，喵声和呼噜都有</li>
         </ul>
@@ -50,10 +50,10 @@
       import { ensureAuth, renderHeader } from '/src/site/store.js';
       await ensureAuth();
       renderHeader();
-      const credits = await fetch('/assets/sounds/credits.json').then((response) => response.json());
+      const credits = await fetch('/assets/sounds/credits.json?v=2').then((response) => response.json());
       const list = credits.map((item) => `<a href="${item.url}" rel="noopener">${item.file.replace('File:', '')}</a> — ${item.author}, ${item.license}`).join('<br />');
-      document.getElementById('soundCreditsEn').innerHTML = `Cat recordings from Wikimedia Commons, trimmed and level-matched (some pitch-shifted):<br />${list}`;
-      document.getElementById('soundCreditsZh').innerHTML = `猫叫录音来自维基共享资源，经过裁剪、音量统一（部分变了调）：<br />${list}`;
+      document.getElementById('soundCreditsEn').innerHTML = `Cat and outdoor recordings from Wikimedia Commons, trimmed and level-matched (some pitch-shifted). Eating, scratching, ball and bell sounds are synthesized.<br />${list}`;
+      document.getElementById('soundCreditsZh').innerHTML = `猫叫和屋外的声音来自维基共享资源，经过裁剪、音量统一（部分变了调）；吃饭、抓板、拍球和铃铛声是合成的。<br />${list}`;
     </script>
   </body>
 </html>

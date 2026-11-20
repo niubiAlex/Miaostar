@@ -1,4 +1,5 @@
 {
+  "redirects": [{ "source": "/xiaowu", "destination": "/shushu", "permanent": true }],
   "rewrites": [
     { "source": "/cats", "destination": "/cats.html" },
     { "source": "/new", "destination": "/new.html" },

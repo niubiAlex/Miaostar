@@ -352,3 +352,166 @@ button {
 .visitor .cat-hit {
   pointer-events: none;
 }
+
+/* 嵌在猫猫主页里：铺满整块场景。房间四周是暖色的空间，房间边缘用同色光晕融进去；
+   昼夜光改成罩住整个画面（不只罩房间），房间和四周一起变暗、变暖。 */
+.embed {
+  /* 和 room.jpg 四周的底色一样，光晕接上去就看不出房间的边框。 */
+  --room-edge: #fdfff2;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 55% 70% at 50% 46%, #f7f1df 0%, #e9dbbb 55%, #cdb791 100%);
+}
+
+.embed .home {
+  height: 100vh;
+  min-height: 0;
+  justify-content: center;
+}
+
+.embed .stage {
+  z-index: 1;
+  width: min(100vw, calc((100vh - 72px) * 0.8));
+  box-shadow: 0 0 160px 130px var(--room-edge);
+}
+
+.embed.visitor .stage {
+  width: min(100vw, calc(100vh * 0.8));
+}
+
+.embed .stage[data-sky] .room,
+.embed .stage[data-sky] .prop,
+.embed .stage[data-sky] .cat {
+  filter: none;
+}
+
+.embed .stage::after {
+  display: none;
+}
+
+.embed::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transition: background 1.2s ease, opacity 1.2s ease;
+}
+
+.embed[data-sky='dawn']::after {
+  background: radial-gradient(ellipse at 50% 30%, rgba(255, 200, 160, 0.3), rgba(200, 160, 170, 0.35));
+  opacity: 1;
+}
+
+.embed[data-sky='morning']::after {
+  background: rgba(255, 240, 210, 0.2);
+  opacity: 1;
+}
+
+.embed[data-sky='afternoon']::after {
+  background: rgba(255, 214, 160, 0.24);
+  opacity: 1;
+}
+
+.embed[data-sky='dusk']::after {
+  background: radial-gradient(ellipse at 50% 40%, rgba(255, 170, 110, 0.4), rgba(110, 60, 90, 0.55));
+  opacity: 1;
+}
+
+.embed[data-sky='night']::after {
+  background: radial-gradient(ellipse at 50% 42%, rgba(70, 80, 140, 0.62), rgba(10, 14, 40, 0.86));
+  opacity: 1;
+}
+
+/* 下雨：雨落在房间外面那片空间里，房间本身是干的。 */
+.embed::before {
+  content: '';
+  position: fixed;
+  inset: -40px 0 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: repeating-linear-gradient(104deg, transparent 0 22px, rgba(120, 140, 170, 0.35) 22px 23px, transparent 23px 47px);
+  transition: opacity 2s ease;
+}
+
+.embed[data-weather='rain']::before {
+  opacity: 1;
+  animation: rain 0.7s linear infinite;
+}
+
+@keyframes rain {
+  to {
+    transform: translateY(40px);
+  }
+}
+
+/* 操作浮在画面底部。 */
+.embed .controls {
+  position: fixed;
+  left: 50%;
+  bottom: 12px;
+  z-index: 8;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: calc(100vw - 24px);
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(254, 247, 229, 0.86);
+  box-shadow: 0 6px 24px rgba(60, 40, 20, 0.18);
+  backdrop-filter: blur(8px);
+}
+
+.embed .status {
+  z-index: 7;
+}
+
+.embed .loading {
+  background: transparent;
+}
+
+@media (max-width: 560px) {
+  .embed .controls {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 6px 8px;
+    border-radius: 999px;
+  }
+
+  .embed .controls .hint,
+  .embed .asks > span {
+    display: none;
+  }
+
+  .embed .controls button {
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  .embed .controls button.primary {
+    padding: 8px 16px;
+    font-size: 15px;
+  }
+
+  .embed .asks {
+    gap: 4px;
+    opacity: 1;
+  }
+
+  /* 上面一排是主页的返回和声音按钮，状态挪到它们下面。 */
+  .embed .status {
+    position: fixed;
+    left: 50%;
+    top: 66px;
+    transform: translateX(-50%);
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .embed[data-weather='rain']::before {
+    animation: none;
+  }
+}

@@ -5,7 +5,8 @@
    "meow2.mp3",
    "meow3.mp3"
   ],
-  "purr": "purr.mp3"
+  "purr": "purr.mp3",
+  "trill": "trill.mp3"
  },
  "sweet": {
   "meows": [
@@ -14,7 +15,8 @@
    "meow3.mp3",
    "meow4.mp3"
   ],
-  "purr": "purr.mp3"
+  "purr": "purr.mp3",
+  "trill": "trill.mp3"
  },
  "chatty": {
   "meows": [
@@ -23,7 +25,8 @@
    "meow3.mp3",
    "meow4.mp3"
   ],
-  "purr": "purr.mp3"
+  "purr": "purr.mp3",
+  "trill": "trill.mp3"
  },
  "deep": {
   "meows": [
@@ -32,7 +35,8 @@
    "meow3.mp3",
    "meow4.mp3"
   ],
-  "purr": "purr.mp3"
+  "purr": "purr.mp3",
+  "trill": "trill.mp3"
  },
  "kitten": {
   "meows": [
@@ -40,6 +44,7 @@
    "meow2.mp3",
    "meow3.mp3"
   ],
-  "purr": "purr.mp3"
+  "purr": "purr.mp3",
+  "trill": "trill.mp3"
  }
 }

@@ -77,6 +77,23 @@ const SKY = {
   night: { id: 'night', label: '夜里', labelEn: 'Night' },
 };
 
+// 天气：用当天的随机数决定今天下不下雨、几点下。大约四天里有一天下雨，一次下两到五个小时。
+export function weatherAt(date = new Date()) {
+  const key = dayKey(date);
+  if (dailyRandom(key, 'rain') > 0.25) return 'clear';
+  const start = 8 + dailyRandom(key, 'rainStart') * 14;
+  const length = 2 + dailyRandom(key, 'rainLength') * 3;
+  const hour = date.getHours() + date.getMinutes() / 60;
+  const sinceMorning = hour < 7 ? hour + 24 : hour;
+  return sinceMorning >= start && sinceMorning < start + length ? 'rain' : 'clear';
+}
+
+// 屋外的环境声：下雨听雨，白天鸟叫，傍晚和夜里是虫鸣。
+export function ambientAt(sky, weather) {
+  if (weather === 'rain') return 'rain';
+  return sky === 'dusk' || sky === 'night' ? 'crickets' : 'birds';
+}
+
 export function skyAt(date = new Date()) {
   const hour = date.getHours() + date.getMinutes() / 60;
   if (hour >= 5 && hour < 7.5) return SKY.dawn;

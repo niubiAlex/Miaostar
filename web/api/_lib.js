@@ -3,28 +3,27 @@ import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 
 export const RESERVED = new Set([
   'cats', 'new', 'home', 'me', 'assets', 'src', 'site', 'concepts', 'scripts', 'vendor',
-  'api', 'login', 'admin', 'about', 'privacy', 'terms', 'xiaowu',
+  'api', 'login', 'admin', 'about', 'privacy', 'terms', 'xiaowu', 'shushu',
 ]);
 
 const SAMPLE = {
-  xiaowu: {
-    slug: 'xiaowu',
-    name: 'Xiaowu',
-    nameZh: '小五',
-    owner: 'Xiaolu',
-    ownerZh: '小鹿',
-    ownerId: 'sample-xiaolu',
+  shushu: {
+    slug: 'shushu',
+    name: 'Uncle',
+    nameZh: '叔叔',
+    owner: 'Cat Town',
+    ownerZh: '喵城镇',
+    ownerId: 'sample-town',
+    public: true,
     tier: '299',
     animated: true,
+    voice: 'deep',
     portrait: '/assets/site/cat_sanhua.jpg',
     coat: 'calico',
     planetDay: '2025-09-12',
-    story: [
-      'Xiaowu was found in a cardboard box downstairs on a rainy day.',
-      'It never liked being held, but every night it slept by my feet.',
-    ],
+    story: [],
     timeline: [{ date: '2025-09-12', text: 'Arrived on Cat Planet' }],
-    lights: 128,
+    lights: 0,
     messages: [],
   },
 };
@@ -146,7 +145,7 @@ export function publicCat(cat) {
 }
 
 export function sampleCats() {
-  return [SAMPLE.xiaowu];
+  return [SAMPLE.shushu];
 }
 
 export async function slugExists(slug) {
