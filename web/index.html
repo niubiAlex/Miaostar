@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>喵星 · Miaostar</title>
+    <meta name="description" content="每一只离开的猫，都去了喵星。Miaostar — a quiet place for cats we miss." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site.css" />
+    <link rel="preload" as="image" href="/assets/world/zoom2.webp" />
+    <link rel="preload" as="image" href="/assets/world/zoom1.webp" />
+    <link rel="preload" as="image" href="/assets/world/world.webp" />
+  </head>
+  <body class="world-page">
+    <header id="siteHeader" class="site-header"></header>
+
+    <main class="world">
+      <div id="worldView" class="world-view">
+        <div id="worldCanvas" class="world-canvas">
+          <img class="world-layer" data-layer="zoom2" src="/assets/world/zoom2.webp" alt="" />
+          <img class="world-layer" data-layer="zoom1" src="/assets/world/zoom1.webp" alt="" />
+          <img class="world-base" src="/assets/world/world.webp" alt="喵星上的喵城镇：中间是广场和思念湖，四周散落着居民猫的小屋" />
+          <img class="town-detail" data-layer="mid" src="/assets/world/mid.webp" alt="" />
+          <img class="town-detail" data-layer="center" src="/assets/world/center.webp" alt="" />
+        </div>
+      </div>
+
+      <section id="worldPanel" class="world-panel">
+        <div class="place place-plaza">
+          <h1>喵星</h1>
+          <p>每一只离开的猫，都去了喵星。<span class="long"><br />它在这里有一间自己的小屋，睡觉、晒太阳、找朋友玩，等你回来看它。</span></p>
+          <a class="button" href="/new">送它来喵星（免费）</a>
+          <ul class="plaza-legend">
+            <li><b>纸箱山</b>新来的猫，都是坐纸箱来的</li>
+            <li><b>瞭望塔</b>在塔上看看所有居民</li>
+            <li><b>思念湖</b>湖上的灯，是大家为猫点的</li>
+            <li><b>广场上的猫</b>都是这里的居民，有的在栈桥钓鱼，有的晒太阳、伸懒腰</li>
+            <li><b>四周的小屋</b>每只猫一间，点一间去它家</li>
+          </ul>
+          <p class="small long" id="residentCount"></p>
+        </div>
+        <div class="place place-house">
+          <h1 id="houseName"></h1>
+          <p class="small" id="houseLine"></p>
+          <a class="button" id="houseLink" href="/new"></a>
+        </div>
+        <div class="place place-overview">
+          <h1>我们的喵城镇</h1>
+          <p class="small">点一间小屋去它家，往外缩小看看整个喵星</p>
+        </div>
+      </section>
+
+      <nav id="worldNav" class="world-nav">
+        <a data-go="plaza" href="/">回广场</a>
+        <button type="button" data-go="overview">看整座城镇</button>
+      </nav>
+    </main>
+
+    <section class="sheet">
+      <h2>怎么送它来喵星</h2>
+      <p class="lead">不用会画画。先留下照片和故事，小屋会慢慢接上。</p>
+      <div class="steps">
+        <div><b>1. 上传几张它的照片</b>正面、侧面都有最好，我们照着它的样子画。</div>
+        <div><b>2. 写下它的故事</b>名字、生日、来到你家的那天，还有你想对它说的话。</div>
+        <div><b>3. 它住进喵星</b>它会在喵城镇里有一间自己的小屋。你随时可以回来看它，朋友们也能来为它点一盏灯。</div>
+      </div>
+    </section>
+
+    <footer></footer>
+
+    <script type="module" src="/src/site/world-page.js"></script>
+  </body>
+</html>

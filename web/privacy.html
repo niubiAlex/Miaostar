@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>隐私 · 喵星 Miaostar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <header id="siteHeader" class="site-header"></header>
+    <main class="sheet" style="margin-top: 32px">
+      <h2>隐私说明</h2>
+      <p class="lead">我们尽量少收集，也尽量说清楚。</p>
+      <h3>当前版本怎么存数据</h3>
+      <p>点灯、留言、你登记的猫的信息，默认保存在<strong>你自己的浏览器</strong>里，不会自动上传到我们的服务器。换设备、清缓存后，这些内容可能消失。</p>
+      <h3>你上传的照片</h3>
+      <p>在「送它来喵星」里选择的照片，目前只在你的浏览器里缩小后保存，用于本机预览。等云端生成上线后，我们会再单独说明照片如何传输与保存，并征求你的同意。</p>
+      <h3>登录</h3>
+      <p>现在的「登录」只是在本机记住一个名字，用来区分主人和访客视角，不是完整的账号系统。</p>
+      <h3>联系</h3>
+      <p>若你希望删除某条展示内容，或对隐私有疑问，请通过网站「关于」页留下的方式联系我们（后续会补上邮箱）。</p>
+      <p class="small">最后更新：2026-11-20</p>
+    </main>
+    <footer></footer>
+    <script type="module">
+      import { renderHeader } from '/src/site/store.js';
+      renderHeader();
+    </script>
+  </body>
+</html>

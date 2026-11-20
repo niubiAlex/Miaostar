@@ -1,0 +1,527 @@
+:root {
+  /* 房间背景图加载出来之前舞台的颜色。 */
+  --stage-bg: #f5e6c0;
+  --page-bg: #efe5c9;
+  --ink: #3b2f24;
+  --ink-soft: #7a6a58;
+  --line: #e0d3b3;
+  --accent: #d9863d;
+  --panel-bg: #fffaf0;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page-bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Helvetica Neue', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.layout {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 16px;
+}
+
+/* 舞台尽量铺满窗口，宽高比 9:16，和竖屏房间背景图一致。操作按钮叠在它上面。 */
+.stage-frame {
+  position: relative;
+  width: min(calc(100vw - 24px), calc((100vh - 24px) * 9 / 16), 480px);
+  aspect-ratio: 9 / 16;
+  /* 叠在舞台上的文字随舞台大小缩放。 */
+  font-size: clamp(12px, 2.6vw, 15px);
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  background: var(--stage-bg);
+  border-radius: 20px;
+  overflow: hidden;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: 0 12px 32px rgba(90, 70, 30, 0.14);
+}
+
+/* 房间比舞台宽，脚本每帧平移它来实现镜头跟随。
+   房间的宽度、里面各样东西的位置和大小，都由脚本按 graph.js 里的常量设置。 */
+.world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  will-change: transform;
+}
+
+/* 每一屏铺一张背景图。相邻两屏互为镜像，这样接缝处正好对得上。 */
+.room {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  background: url('assets/room.jpg') center / 100% 100% no-repeat;
+}
+
+.room-mirrored {
+  transform: scaleX(-1);
+}
+
+.prop {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* 前后顺序：窝在宠物后面，碗和爱心在宠物前面。 */
+.bed {
+  z-index: 0;
+}
+
+.bowl {
+  z-index: 2;
+}
+
+.hearts {
+  z-index: 3;
+}
+
+.cat {
+  position: absolute;
+  z-index: 1;
+  aspect-ratio: 1;
+  /* 气泡贴着头顶；--head-top 是头顶在视频画面里的高度，随姿态变化。 */
+  --head-top: 0.18;
+  will-change: transform;
+}
+
+.cat video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* 抠图时去掉了视频里的影子，这里统一补一个，让它看起来踩在地板上。 */
+.cat-shadow {
+  position: absolute;
+  left: 14%;
+  width: 72%;
+  top: 82%;
+  height: 9%;
+  background: radial-gradient(ellipse at center, rgba(70, 45, 20, 0.38), rgba(70, 45, 20, 0.12) 42%, rgba(70, 45, 20, 0) 72%);
+}
+
+.cat-hit {
+  position: absolute;
+  inset: 8% 12%;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-radius: 24px;
+  cursor: pointer;
+}
+
+.cat-hit:hover {
+  border: 0;
+}
+
+.cat-hit:focus-visible {
+  outline: 3px solid var(--accent);
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+  background: var(--stage-bg);
+  z-index: 5;
+}
+
+.loading[hidden] {
+  display: none;
+}
+
+.bubble {
+  position: absolute;
+  left: 50%;
+  bottom: calc((1 - var(--head-top)) * 100% + 6px);
+  width: max-content;
+  max-width: 16em;
+  padding: 0.5em 0.85em;
+  background: #fff;
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: 0 4px 14px rgba(90, 70, 30, 0.2);
+  pointer-events: none;
+  z-index: 3;
+  /* 宠物会按远近缩放，气泡抵消掉这个缩放，保持原来的大小。 */
+  transform: scale(calc(1 / var(--scale, 1)));
+  transform-origin: left bottom;
+  animation: bubble-in 180ms ease-out;
+}
+
+.bubble[hidden] {
+  display: none;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    translate: 0 6px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+.bed-side {
+  fill: #b9795a;
+}
+
+.bed-top {
+  fill: #d99873;
+}
+
+.bed-dip {
+  fill: #e8b392;
+}
+
+.bowl-shadow {
+  fill: rgba(70, 45, 20, 0.22);
+}
+
+.bowl-body {
+  fill: #6f9fc0;
+}
+
+.bowl-rim {
+  fill: #8db8d6;
+}
+
+.bowl-inside {
+  fill: #5d88a6;
+}
+
+/* 碗一直在，喂食时才有食物。 */
+.bowl-food {
+  fill: #a8703f;
+  opacity: 0;
+  transition: opacity 300ms ease;
+}
+
+.bowl.filled .bowl-food {
+  opacity: 1;
+}
+
+.hearts {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.heart {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  fill: #e8614f;
+  animation: heart-rise 900ms ease-out forwards;
+}
+
+@keyframes heart-rise {
+  from {
+    opacity: 0.95;
+    transform: translate(0, 0) scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--drift), -90px) scale(1.25);
+  }
+}
+
+/* ---------- 叠在舞台上的操作 ---------- */
+
+.hud {
+  position: absolute;
+  z-index: 6;
+}
+
+/* 左上角：三项状态。 */
+.meters {
+  top: 0.8em;
+  left: 0.8em;
+  width: 11em;
+  padding: 0.6em 0.9em 0.7em;
+  background: rgba(255, 250, 240, 0.82);
+  backdrop-filter: blur(6px);
+  border-radius: 1em;
+  pointer-events: none;
+}
+
+.hint {
+  top: 5.2em;
+  left: 0.8em;
+  margin: 0;
+  padding: 0.35em 0.7em;
+  width: max-content;
+  max-width: calc(100% - 5em);
+  color: var(--ink);
+  background: rgba(255, 250, 240, 0.7);
+  border-radius: 1em;
+  font-size: 0.9em;
+  pointer-events: none;
+  /* 提示只在开头出现一会儿。 */
+  animation: hint-out 600ms ease 9s forwards;
+}
+
+@keyframes hint-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* 底部正中：操作按钮。 */
+.actions {
+  left: 50%;
+  bottom: 1em;
+  transform: translateX(-50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em 1em;
+  width: max-content;
+  max-width: calc(100% - 2em);
+}
+
+.actions .primary button {
+  padding: 0.4em 1.2em;
+  font-size: 1em;
+  font-weight: 600;
+  border-radius: 999px;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(90, 70, 30, 0.22);
+}
+
+.actions .secondary {
+  align-items: center;
+  justify-content: center;
+  padding: 0.3em 0.7em;
+  flex-wrap: wrap;
+  color: var(--ink-soft);
+  background: rgba(255, 250, 240, 0.82);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+  font-size: 0.85em;
+}
+
+.actions .secondary .buttons {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.actions .secondary button {
+  padding: 0.2em 0.8em;
+  border-radius: 999px;
+}
+
+.actions .divider {
+  width: 1px;
+  height: 1.2em;
+  background: var(--line);
+}
+
+.debug-toggle {
+  top: 1em;
+  right: 1em;
+  padding: 0.25em 0.8em;
+  font-size: 0.85em;
+  color: var(--ink-soft);
+  background: rgba(255, 250, 240, 0.7);
+  border-radius: 999px;
+}
+
+.debug-toggle[aria-expanded='true'] {
+  color: var(--ink);
+  border-color: var(--accent);
+}
+
+/* 调试面板：展开时靠右叠在舞台上。 */
+.panel {
+  top: 3.4em;
+  right: 1em;
+  bottom: 1em;
+  width: min(340px, calc(100% - 2em));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  font-size: 13px;
+}
+
+.panel[hidden] {
+  display: none;
+}
+
+.panel section {
+  background: rgba(255, 250, 240, 0.94);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px 14px;
+}
+
+.panel h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.status {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: 4px 8px;
+  margin: 0;
+}
+
+.status dt {
+  color: var(--ink-soft);
+}
+
+.status dd {
+  margin: 0;
+}
+
+.meter {
+  display: grid;
+  grid-template-columns: 2.4em 1fr 1.8em;
+  align-items: center;
+  gap: 0.5em;
+  margin-top: 0.15em;
+  color: var(--ink-soft);
+  font-size: 0.9em;
+}
+
+.meter-track {
+  height: 0.5em;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 400ms ease;
+}
+
+.meter-value {
+  text-align: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 6px 14px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+.anchors {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.anchors li {
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.anchors img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background: var(--stage-bg);
+}
+
+.anchors li.current img {
+  border-color: var(--accent);
+}
+
+.anchors li.unused img {
+  opacity: 0.45;
+}
+
+.anchors strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.log {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 13px;
+}
+
+.log li {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px dashed var(--line);
+}
+
+.log li:last-child {
+  border-bottom: none;
+}
+
+.log time {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.log .reason {
+  display: block;
+  color: var(--ink-soft);
+  font-size: 12px;
+}

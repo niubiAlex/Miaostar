@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>猫星 · 它的家</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="layout">
+      <!-- 舞台铺满窗口，操作都叠在舞台上。操作放在舞台外面这一层，点它们不会被当成点地板。 -->
+      <div class="stage-frame">
+        <!-- 舞台是一屏大小的窗口；房间有好几屏宽，镜头跟着宠物左右移动。房间背景由脚本铺上。 -->
+        <div id="stage" class="stage">
+          <div id="world" class="world">
+
+            <svg id="bed" class="prop bed" viewBox="0 0 200 52" aria-hidden="true">
+              <ellipse cx="100" cy="30" rx="98" ry="21" class="bed-side" />
+              <ellipse cx="100" cy="24" rx="98" ry="21" class="bed-top" />
+              <ellipse cx="100" cy="24" rx="76" ry="14" class="bed-dip" />
+            </svg>
+
+            <div id="cat" class="cat">
+              <div class="cat-shadow"></div>
+              <video id="videoA" muted playsinline preload="auto"></video>
+              <video id="videoB" muted playsinline preload="auto"></video>
+              <button id="catHit" class="cat-hit" type="button" aria-label="摸摸它"></button>
+              <div id="bubble" class="bubble" hidden></div>
+            </div>
+
+            <svg id="bowl" class="prop bowl" viewBox="0 0 120 44" aria-hidden="true">
+              <ellipse cx="60" cy="38" rx="48" ry="5" class="bowl-shadow" />
+              <path d="M10 13 Q15 38 36 38 H84 Q105 38 110 13 Z" class="bowl-body" />
+              <ellipse cx="60" cy="13" rx="50" ry="8" class="bowl-rim" />
+              <ellipse cx="60" cy="14" rx="42" ry="5.5" class="bowl-inside" />
+              <ellipse cx="60" cy="14" rx="42" ry="5.5" class="bowl-food" />
+            </svg>
+
+            <div id="hearts" class="hearts" aria-hidden="true"></div>
+          </div>
+          <div id="loading" class="loading">正在加载片段</div>
+        </div>
+
+        <div class="hud meters">
+          <div class="meter">
+            <span>精力</span>
+            <div class="meter-track"><div id="energyBar" class="meter-fill"></div></div>
+            <span id="energyValue" class="meter-value">-</span>
+          </div>
+          <div class="meter">
+            <span>心情</span>
+            <div class="meter-track"><div id="moodBar" class="meter-fill"></div></div>
+            <span id="moodValue" class="meter-value">-</span>
+          </div>
+          <div class="meter">
+            <span>饱食</span>
+            <div class="meter-track"><div id="satietyBar" class="meter-fill"></div></div>
+            <span id="satietyValue" class="meter-value">-</span>
+          </div>
+        </div>
+
+        <p class="hud hint">这是它的家。点它是摸头；点地板它会走过去，双击会跑过去</p>
+
+        <!-- 底部一行：宠物的脚底线在它上面，挡不到宠物。 -->
+        <div class="hud actions">
+          <div class="buttons primary">
+            <button id="petButton" type="button">摸摸它</button>
+            <button id="feedButton" type="button">喂食</button>
+            <button id="playButton" type="button">逗它玩</button>
+          </div>
+          <div class="buttons secondary">
+            <span>去</span>
+            <span id="spotButtons" class="buttons"></span>
+            <span class="divider"></span>
+            <span>让它</span>
+            <span id="gotoButtons" class="buttons"></span>
+          </div>
+        </div>
+
+        <button id="debugToggle" class="hud debug-toggle" type="button" aria-expanded="false">调试</button>
+
+        <!-- 调试信息：平时收起，点「调试」展开。 -->
+        <aside id="panel" class="hud panel" hidden>
+          <section>
+            <h2>当前状态</h2>
+            <dl class="status">
+              <dt>姿态</dt>
+              <dd id="statusAnchor">-</dd>
+              <dt>位置</dt>
+              <dd id="statusPlace">-</dd>
+              <dt>正在播放</dt>
+              <dd id="statusClip">-</dd>
+              <dt>排队中</dt>
+              <dd id="statusQueue">无</dd>
+            </dl>
+          </section>
+
+          <section>
+            <h2>固定姿态</h2>
+            <ul id="anchors" class="anchors"></ul>
+          </section>
+
+          <section>
+            <h2>播放记录</h2>
+            <ol id="log" class="log"></ol>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <script type="module" src="src/main.js"></script>
+  </body>
+</html>

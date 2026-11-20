@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>关于 · 喵星 Miaostar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <header id="siteHeader" class="site-header"></header>
+    <main class="sheet" style="margin-top: 32px">
+      <h2>关于喵星</h2>
+      <p class="lead">Miaostar · 每一只离开的猫，都去了喵星。</p>
+      <p>喵星是一个安静的小地方。猫在这里有自己的小屋，会去广场晒太阳、伸懒腰、在栈桥边看水；你也可以回来看看它、为它点一盏灯、留一句话。</p>
+      <p>我们希望它像一幅手绘的风景：柔和、慢慢的，不催你，也不吵闹。</p>
+      <h3>现在可以做什么</h3>
+      <ul class="plain">
+        <li>逛喵城镇，看看广场和小屋</li>
+        <li>打开小五的家，看它在小屋里生活</li>
+        <li>为猫点灯、留言</li>
+        <li>登记一只新猫（先留下照片和故事；小屋动画会陆续接上）</li>
+      </ul>
+      <h3>还在路上</h3>
+      <p>账号云端同步、自动生成小屋动画、付费档位等，我们会慢慢补上。今天先把这扇门打开。</p>
+      <p><a class="button" href="/new">送它来喵星</a></p>
+    </main>
+    <footer></footer>
+    <script type="module">
+      import { renderHeader } from '/src/site/store.js';
+      renderHeader();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>猫星 · 它的家（通用模型验证）</title>
+    <style>
+      :root {
+        --line: #e2d5c2;
+        --ink: #4a3a2a;
+        --accent: #e8964a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      html,
+      body {
+        height: 100%;
+        margin: 0;
+        background: #efe6d8;
+        color: var(--ink);
+        font: 15px/1.5 -apple-system, 'PingFang SC', 'Helvetica Neue', sans-serif;
+      }
+      .layout {
+        height: 100%;
+        display: grid;
+        place-items: center;
+      }
+      /* 竖屏舞台，和视频版一样是 9:16。 */
+      .stage {
+        position: relative;
+        height: min(100vh, 177.78vw);
+        aspect-ratio: 9 / 16;
+        overflow: hidden;
+        background: #f6ead6;
+      }
+      canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+      .hud {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 12px;
+        pointer-events: none;
+      }
+      .hud.top {
+        top: 12px;
+      }
+      .hud.bottom {
+        bottom: 14px;
+      }
+      .hud button {
+        pointer-events: auto;
+        padding: 8px 14px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 250, 240, 0.88);
+        color: var(--ink);
+        font: inherit;
+        cursor: pointer;
+      }
+      .hud button.small {
+        padding: 5px 11px;
+        font-size: 13px;
+      }
+      .hud button[aria-pressed='true'] {
+        border-color: var(--accent);
+        background: #fff;
+        color: #b9651c;
+      }
+      .hint {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 92px;
+        margin: 0;
+        text-align: center;
+        font-size: 13px;
+        opacity: 0.75;
+        pointer-events: none;
+      }
+      .loading {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #f6ead6;
+      }
+      .heart {
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        margin: -11px 0 0 -11px;
+        fill: #f0707f;
+        pointer-events: none;
+        animation: heart-up 900ms ease-out forwards;
+      }
+      @keyframes heart-up {
+        from {
+          opacity: 0.95;
+          transform: translate(0, 0) scale(0.6);
+        }
+        to {
+          opacity: 0;
+          transform: translate(var(--drift), -80px) scale(1.2);
+        }
+      }
+    </style>
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./vendor/three/three.module.js",
+          "three/addons/": "./vendor/three/addons/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="layout">
+      <div id="stage" class="stage">
+        <canvas id="canvas"></canvas>
+        <div class="hud top">
+          <button id="coatCalico" class="small" type="button" aria-pressed="true">三花（照片生成的贴图）</button>
+          <button id="coatOriginal" class="small" type="button" aria-pressed="false">模型自带的橘猫</button>
+          <button id="viewAngled" class="small" type="button" aria-pressed="true">45° 视角</button>
+          <button id="viewFront" class="small" type="button" aria-pressed="false">正面视角</button>
+        </div>
+        <p class="hint">点它是摸头；点地板它会走过去，双击会跑过去</p>
+        <div class="hud bottom">
+          <button id="petButton" type="button">摸摸它</button>
+          <button id="feedButton" type="button">喂食</button>
+          <button id="sitButton" type="button">坐下</button>
+          <button id="sleepButton" type="button">回窝睡觉</button>
+        </div>
+        <div id="loading" class="loading">正在加载模型</div>
+      </div>
+    </main>
+    <script type="module" src="src/rig3d.js"></script>
+  </body>
+</html>

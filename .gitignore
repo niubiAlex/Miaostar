@@ -1,0 +1,24 @@
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+.env
+.env.*
+!.env.example
+pipeline/out/
+pipeline/cats/*/work/
+pipeline/cats/*/clips/
+pipeline/cats/*/normalized/
+pipeline/cats/*/report_*.json
+*.log
+.vercel/
+node_modules/
+web/scripts/out/
+web/vendor/
+# 线上目前只有小五；花色模板与旧片段不进仓库，减小体积
+web/assets/cats/
+web/assets/clips/
+web/assets/plaza/
+pipeline/
+.idea/
+.vscode/

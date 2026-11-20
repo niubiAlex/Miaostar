@@ -1,0 +1,317 @@
+{
+ "house_red": {
+  "kind": "houses_a",
+  "w": 333,
+  "h": 303
+ },
+ "house_blue": {
+  "kind": "houses_a",
+  "w": 325,
+  "h": 297
+ },
+ "house_green": {
+  "kind": "houses_a",
+  "w": 324,
+  "h": 300
+ },
+ "house_brown": {
+  "kind": "houses_a",
+  "w": 329,
+  "h": 291
+ },
+ "house_purple": {
+  "kind": "houses_a",
+  "w": 323,
+  "h": 293
+ },
+ "house_orange": {
+  "kind": "houses_a",
+  "w": 327,
+  "h": 287
+ },
+ "house_straw": {
+  "kind": "houses_a",
+  "w": 332,
+  "h": 304
+ },
+ "house_teal": {
+  "kind": "houses_a",
+  "w": 328,
+  "h": 311
+ },
+ "house_pink": {
+  "kind": "houses_a",
+  "w": 327,
+  "h": 318
+ },
+ "home_catear": {
+  "kind": "houses_b",
+  "w": 323,
+  "h": 336
+ },
+ "home_stump": {
+  "kind": "houses_b",
+  "w": 323,
+  "h": 319
+ },
+ "home_tower": {
+  "kind": "houses_b",
+  "w": 316,
+  "h": 345
+ },
+ "home_box": {
+  "kind": "houses_b",
+  "w": 329,
+  "h": 281
+ },
+ "home_mushroom": {
+  "kind": "houses_b",
+  "w": 330,
+  "h": 297
+ },
+ "home_balcony": {
+  "kind": "houses_b",
+  "w": 307,
+  "h": 330
+ },
+ "home_roofgarden": {
+  "kind": "houses_b",
+  "w": 328,
+  "h": 325
+ },
+ "home_teapot": {
+  "kind": "houses_b",
+  "w": 318,
+  "h": 304
+ },
+ "home_fishvane": {
+  "kind": "houses_b",
+  "w": 316,
+  "h": 303
+ },
+ "yarn": {
+  "kind": "landmarks",
+  "w": 359,
+  "h": 278
+ },
+ "cattree": {
+  "kind": "landmarks",
+  "w": 263,
+  "h": 335
+ },
+ "boxhill": {
+  "kind": "landmarks",
+  "w": 333,
+  "h": 298
+ },
+ "windmill": {
+  "kind": "landmarks",
+  "w": 311,
+  "h": 299
+ },
+ "observatory": {
+  "kind": "landmarks",
+  "w": 318,
+  "h": 292
+ },
+ "fishcan": {
+  "kind": "landmarks",
+  "w": 314,
+  "h": 290
+ },
+ "cafe": {
+  "kind": "landmarks",
+  "w": 353,
+  "h": 332
+ },
+ "lighthouse": {
+  "kind": "landmarks",
+  "w": 304,
+  "h": 337
+ },
+ "lanterntree": {
+  "kind": "landmarks",
+  "w": 338,
+  "h": 335
+ },
+ "tree": {
+  "kind": "nature",
+  "w": 232,
+  "h": 252
+ },
+ "pine": {
+  "kind": "nature",
+  "w": 189,
+  "h": 263
+ },
+ "cherry": {
+  "kind": "nature",
+  "w": 235,
+  "h": 253
+ },
+ "autumn": {
+  "kind": "nature",
+  "w": 227,
+  "h": 258
+ },
+ "bush": {
+  "kind": "nature",
+  "w": 215,
+  "h": 171
+ },
+ "foxtail": {
+  "kind": "nature",
+  "w": 228,
+  "h": 211
+ },
+ "lantern": {
+  "kind": "nature",
+  "w": 177,
+  "h": 216
+ },
+ "mailbox": {
+  "kind": "nature",
+  "w": 168,
+  "h": 206
+ },
+ "flowerbed": {
+  "kind": "nature",
+  "w": 253,
+  "h": 169
+ },
+ "signpost": {
+  "kind": "nature",
+  "w": 178,
+  "h": 215
+ },
+ "bench": {
+  "kind": "nature",
+  "w": 260,
+  "h": 169
+ },
+ "laundry": {
+  "kind": "nature",
+  "w": 240,
+  "h": 193
+ },
+ "fishrack": {
+  "kind": "nature",
+  "w": 244,
+  "h": 204
+ },
+ "well": {
+  "kind": "nature",
+  "w": 219,
+  "h": 237
+ },
+ "hay": {
+  "kind": "nature",
+  "w": 246,
+  "h": 207
+ },
+ "bell": {
+  "kind": "nature",
+  "w": 180,
+  "h": 232
+ },
+ "lake": {
+  "kind": "ground",
+  "w": 511,
+  "h": 414
+ },
+ "maze": {
+  "kind": "ground",
+  "w": 461,
+  "h": 425
+ },
+ "foxfield": {
+  "kind": "ground",
+  "w": 479,
+  "h": 476
+ },
+ "meadow": {
+  "kind": "ground",
+  "w": 490,
+  "h": 468
+ },
+ "cat_sit": {
+  "kind": "cats",
+  "w": 212,
+  "h": 213
+ },
+ "cat_sleep": {
+  "kind": "cats",
+  "w": 228,
+  "h": 145
+ },
+ "cat_stretch": {
+  "kind": "cats",
+  "w": 227,
+  "h": 212
+ },
+ "cat_walk": {
+  "kind": "cats",
+  "w": 225,
+  "h": 212
+ },
+ "cat_belly": {
+  "kind": "cats",
+  "w": 240,
+  "h": 167
+ },
+ "cat_groom": {
+  "kind": "cats",
+  "w": 213,
+  "h": 212
+ },
+ "cat_siamese": {
+  "kind": "cats",
+  "w": 215,
+  "h": 207
+ },
+ "cat_loaf": {
+  "kind": "cats",
+  "w": 226,
+  "h": 155
+ },
+ "cat_butterfly": {
+  "kind": "cats",
+  "w": 230,
+  "h": 209
+ },
+ "cat_tail": {
+  "kind": "cats",
+  "w": 222,
+  "h": 214
+ },
+ "cat_yawn": {
+  "kind": "cats",
+  "w": 212,
+  "h": 216
+ },
+ "cat_yarn": {
+  "kind": "cats",
+  "w": 237,
+  "h": 158
+ },
+ "cat_cuddle": {
+  "kind": "cats",
+  "w": 241,
+  "h": 207
+ },
+ "cat_fishing": {
+  "kind": "cats",
+  "w": 228,
+  "h": 234
+ },
+ "cat_pot": {
+  "kind": "cats",
+  "w": 226,
+  "h": 217
+ },
+ "cat_box": {
+  "kind": "cats",
+  "w": 230,
+  "h": 193
+ }
+}

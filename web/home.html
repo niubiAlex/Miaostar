@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>猫星 · 它的小屋</title>
+    <link rel="stylesheet" href="home.css" />
+  </head>
+  <body>
+    <main class="home">
+      <!-- 舞台按 576×720 的设计尺寸等比缩放，里面的东西都用百分比定位。 -->
+      <div id="stage" class="stage">
+        <img class="room" src="assets/home45/room.jpg" alt="" />
+        <!-- 道具平时不显示，用的时候才出现，都在它下面一层。吃饭片段里自己画着碗，它低头时嘴会盖在碗上。 -->
+        <img id="bed" class="prop" src="assets/home45/bed.png" alt="" />
+        <img id="bowl" class="prop" src="assets/home45/bowl_full.png" alt="" />
+        <img id="board" class="prop" src="assets/home45/board.png" alt="" />
+
+        <div id="cat" class="cat">
+          <div class="cat-shadow"></div>
+          <video id="videoA" muted playsinline preload="auto"></video>
+          <video id="videoB" muted playsinline preload="auto"></video>
+          <button id="catHit" class="cat-hit" type="button" aria-label="摸摸头"></button>
+        </div>
+
+        <!-- 门所在的那面墙（门洞挖空）：它出门、进门时盖在它上面，所以只能从门洞里看见它。 -->
+        <img id="doorCover" class="room door-cover" src="assets/home45/door_cover.png" alt="" hidden />
+
+        <div id="bubble" class="bubble" hidden></div>
+        <div id="hearts" class="hearts" aria-hidden="true"></div>
+        <div id="away" class="away" hidden>出门玩去了</div>
+        <div id="status" class="status"></div>
+        <div id="loading" class="loading">正在加载</div>
+      </div>
+
+      <div class="controls">
+        <!-- 对比三个档位用，正式产品里由用户买了哪一档决定。 -->
+        <nav class="tiers">
+          <a data-tier="free" href="?tier=free">免费</a>
+          <a data-tier="99" href="?tier=99">¥99</a>
+          <a data-tier="299" href="?tier=299">¥299</a>
+        </nav>
+        <button id="callButton" class="primary" type="button">叫它</button>
+        <span class="hint">点它摸摸头</span>
+        <div class="asks">
+          <span>让它去</span>
+          <button type="button" data-ask="eat">吃饭</button>
+          <button type="button" data-ask="play">玩球</button>
+          <button type="button" data-ask="sleep">睡觉</button>
+          <button type="button" data-ask="scratch">抓板</button>
+          <button type="button" data-ask="out">出门</button>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="src/home.js?v=6"></script>
+  </body>
+</html>

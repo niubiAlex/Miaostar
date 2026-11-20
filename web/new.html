@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>送它来喵星 · Miaostar</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/site.css" />
+  </head>
+  <body>
+    <header id="siteHeader" class="site-header"></header>
+
+    <main class="sheet" style="margin-top: 32px">
+      <h2>送它来喵星</h2>
+      <p class="lead">免费。先留下照片和故事；小屋动画会陆续接上，做好了它的主页会更新。</p>
+
+      <form id="form" class="form" novalidate>
+        <label>
+          <span>它的照片（1 到 5 张）</span>
+          <input type="file" name="photos" accept="image/*" multiple />
+          <span class="hint">正脸、侧面、全身都有最好。照片目前保存在你的浏览器里。</span>
+          <div id="photoPreview" class="photos"></div>
+        </label>
+
+        <div class="row">
+          <label><span>它叫什么</span><input name="name" maxlength="12" placeholder="比如：小五" /></label>
+          <label><span>你的名字</span><input name="owner" maxlength="12" placeholder="主页上会写「谁的猫」" /></label>
+        </div>
+
+        <label>
+          <span>它的主页地址</span>
+          <div class="slug-input"><span>喵星/</span><input name="slug" maxlength="24" placeholder="xiaowu" /></div>
+          <span class="hint">小写字母、数字或短横线，比如它名字的拼音。</span>
+        </label>
+
+        <div class="row">
+          <label><span>生日（可不填）</span><input type="date" name="birthday" /></label>
+          <label><span>来到家里的日子（可不填）</span><input type="date" name="homeDay" /></label>
+          <label><span>来到喵星的日子</span><input type="date" name="planetDay" /></label>
+        </div>
+
+        <label><span>花色（可不填）</span><input name="coat" maxlength="20" placeholder="比如：三花、橘猫、黑白奶牛" /></label>
+
+        <label>
+          <span>你想对它说的话</span>
+          <textarea name="story" rows="6" maxlength="2000" placeholder="它是怎么来到你家的，它有什么小习惯，你最想念它的什么……"></textarea>
+          <span class="hint">空一行就是新的一段。</span>
+        </label>
+
+        <p class="hint">提交即表示你已阅读 <a href="/terms">使用说明</a> 和 <a href="/privacy">隐私说明</a>。</p>
+        <p id="error" class="error" hidden></p>
+        <button type="submit" class="button">送它来喵星</button>
+      </form>
+    </main>
+
+    <footer></footer>
+    <script type="module" src="/src/site/new-page.js"></script>
+  </body>
+</html>
