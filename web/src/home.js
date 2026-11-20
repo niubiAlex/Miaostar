@@ -1,7 +1,7 @@
 // 45° 小屋：镜头固定。吃饭、睡觉、抓板都回到屋子中间做，道具平时不显示，用的时候在中间出现，用完消失。
 // 平时它在屋里溜达：溜达片段里它是真的在画面里走一段（镜头不动，路线带弯），播完后网页把它的位置挪到终点。
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
-import { ClipPlayer } from './player.js?v=4';
+import { ClipPlayer } from './player.js?v=6';
 import { MEALS, MEALS_EN, ambientAt, dayKey, phaseAt, skyAt, weatherAt } from './schedule.js?v=7';
 import { createVoice } from './site/sound.js?v=3';
 
@@ -99,6 +99,10 @@ const elements = Object.fromEntries(
     'catHit', 'videoA', 'videoB'].map((id) => [id, document.getElementById(id)]),
 );
 const player = new ClipPlayer(elements.videoA, elements.videoB);
+player.onBlocked = (blocked) => {
+  elements.loading.textContent = L('点一下屋子，看看它在干嘛', 'Tap the room to see what they are up to');
+  elements.loading.hidden = !blocked;
+};
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const random = (from, to) => from + Math.random() * (to - from);
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -599,8 +603,31 @@ function chooseActivity(phase) {
 }
 
 let currentAmbient = null;
+// 清晨、傍晚、夜里换一张画好光线的房间图（夜里点着壁灯、没有阳光的印子），其余时候用白天那张。
+const ROOM_TIMES = { dawn: 'dawn', dusk: 'dusk', night: 'night' };
+const roomTime = document.getElementById('roomTime');
+// 时段图的房间外面是透明的，夜色直接铺到房间边上；出门时挡住猫的门框也换成同一时段的。
+function applyRoomTime(skyId) {
+  const name = ROOM_TIMES[skyId];
+  if ((roomTime.dataset.name ?? '') === (name ?? '')) return;
+  roomTime.dataset.name = name ?? '';
+  if (!name) {
+    roomTime.classList.remove('shown');
+    delete document.body.dataset.roomTime;
+    elements.doorCover.src = 'assets/home45/door_cover.png';
+    return;
+  }
+  roomTime.onload = () => {
+    roomTime.classList.add('shown');
+    document.body.dataset.roomTime = name;
+    elements.doorCover.src = `assets/home45/door_cover_${name}.webp`;
+  };
+  roomTime.src = `assets/home45/room_${name}.webp`;
+}
+
 function applySky() {
   const sky = skyAt(clock());
+  applyRoomTime(sky.id);
   if (elements.stage.dataset.sky !== sky.id) elements.stage.dataset.sky = sky.id;
   document.body.dataset.sky = sky.id;
   const weather = params.get('weather') ?? weatherAt(clock());

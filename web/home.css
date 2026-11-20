@@ -72,12 +72,12 @@ body {
 }
 
 .stage[data-sky='dusk']::after {
-  background: linear-gradient(180deg, rgba(255, 140, 70, 0.28), rgba(80, 50, 90, 0.22));
+  background: linear-gradient(180deg, rgba(255, 140, 70, 0.12), rgba(80, 50, 90, 0.1));
   opacity: 1;
 }
 
 .stage[data-sky='night']::after {
-  background: linear-gradient(180deg, rgba(30, 40, 90, 0.55), rgba(12, 18, 48, 0.62));
+  background: linear-gradient(180deg, rgba(30, 40, 90, 0.18), rgba(12, 18, 48, 0.24));
   opacity: 1;
 }
 
@@ -96,7 +96,32 @@ body {
 .stage[data-sky='night'] .room,
 .stage[data-sky='night'] .prop,
 .stage[data-sky='night'] .cat {
-  filter: brightness(0.58) saturate(0.75);
+  filter: brightness(0.7) saturate(0.85) sepia(0.12);
+}
+
+/* 时段房间图自己画好了光线，不再压暗；只有猫和道具跟着调一点，和屋里的光对上。 */
+.room-time {
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+
+.room {
+  transition: opacity 1.6s ease;
+}
+
+[data-room-time] .stage .room:not(.room-time):not(.door-cover) {
+  opacity: 0;
+}
+
+.room-time.shown {
+  opacity: 1;
+}
+
+.stage[data-sky] .room-time,
+.stage[data-sky='dawn'] .room,
+.stage[data-sky='dusk'] .room,
+.stage[data-sky='night'] .room {
+  filter: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -415,14 +440,37 @@ button {
   opacity: 1;
 }
 
+.embed .stage {
+  transition: box-shadow 1.6s ease;
+}
+
+/* 有时段房间图时：不要米色光晕，天色那一层垫到房间下面，只染房间外面。 */
+.embed[data-room-time] .stage {
+  box-shadow: none;
+}
+
+.embed[data-room-time]::after {
+  z-index: 0;
+}
+
 .embed[data-sky='dusk']::after {
-  background: radial-gradient(ellipse at 50% 40%, rgba(255, 170, 110, 0.4), rgba(110, 60, 90, 0.55));
+  background: radial-gradient(ellipse at 50% 46%, rgba(190, 120, 120, 0.5), rgba(90, 50, 80, 0.72));
   opacity: 1;
 }
 
 .embed[data-sky='night']::after {
-  background: radial-gradient(ellipse at 50% 42%, rgba(70, 80, 140, 0.62), rgba(10, 14, 40, 0.86));
+  background: radial-gradient(ellipse at 50% 46%, rgba(40, 50, 100, 0.78), rgba(10, 14, 40, 0.92));
   opacity: 1;
+}
+
+.embed .stage[data-sky='dusk'] .prop,
+.embed .stage[data-sky='dusk'] .cat {
+  filter: brightness(0.9) saturate(1.05) sepia(0.12);
+}
+
+.embed .stage[data-sky='night'] .prop,
+.embed .stage[data-sky='night'] .cat {
+  filter: brightness(0.72) saturate(0.85) sepia(0.15);
 }
 
 /* 下雨：雨落在房间外面那片空间里，房间本身是干的。 */

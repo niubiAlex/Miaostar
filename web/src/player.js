@@ -29,6 +29,22 @@ function firstFrame(video) {
   });
 }
 
+// iOS 在低电量模式、省流量时不预先加载视频，也不让它自己播：「数据已加载」的事件一直不来，
+// 要先调用 play()，被拒绝时还得等用户点一下页面。
+function nextGesture() {
+  return new Promise((resolve) => {
+    const go = () => {
+      removeEventListener('pointerdown', go, true);
+      removeEventListener('touchstart', go, true);
+      resolve();
+    };
+    addEventListener('pointerdown', go, true);
+    addEventListener('touchstart', go, true);
+  });
+}
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // 等片段自己播完。浏览器可能在页面进入后台时暂停视频，回到前台后要接着播。
 // 返回 { ended, stopWatching }：片段被中途打断时调用 stopWatching，不再帮它恢复播放。
 function playedToEnd(video) {
@@ -85,11 +101,27 @@ export class ClipPlayer {
       files.map(async (file) => {
         const response = await fetch(file + EXTENSION);
         if (!response.ok) throw new Error(`片段加载失败：${file}${EXTENSION}（${response.status}）`);
-        this.urls.set(file, URL.createObjectURL(await response.blob()));
+        const blob = new Blob([await response.blob()], { type: IS_SAFARI ? 'video/quicktime' : 'video/webm' });
+        this.urls.set(file, URL.createObjectURL(blob));
         done += 1;
         onProgress?.(done, files.length);
       }),
     );
+  }
+
+  // 开始播；浏览器不让自动播时，告诉页面（onBlocked），等用户点一下再播。
+  async start(video) {
+    for (;;) {
+      try {
+        await video.play();
+        return;
+      } catch (error) {
+        if (error?.name !== 'NotAllowedError') return;
+        this.onBlocked?.(true);
+        await nextGesture();
+        this.onBlocked?.(false);
+      }
+    }
   }
 
   // 播放一个片段，结束后返回 { seconds, wasCut }：播了片段里的多少秒，是不是被 cut() 中途打断的。
@@ -119,11 +151,13 @@ export class ClipPlayer {
     incoming.style.transform = clip.transform ?? 'none';
     const loaded = once(incoming, 'loadeddata');
     incoming.src = this.urls.get(clip.file);
-    await loaded;
+    await Promise.race([loaded, sleep(1500)]);
     incoming.playbackRate = rate * hurry;
     // 先挂上「播完」的监听（它同时负责在视频被浏览器暂停后恢复播放），再开始播。
     const { ended, stopWatching } = playedToEnd(incoming);
-    await incoming.play().catch(() => {});
+    await this.start(incoming);
+    await loaded;
+    incoming.playbackRate = rate * hurry;
     await firstFrame(incoming);
 
     // 新片段移到上层淡入。旧片段在淡入期间不透明地垫在下面，所以宠物不会变淡；
