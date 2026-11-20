@@ -1,4 +1,4 @@
-import { list, put, del } from '@vercel/blob';
+import { list, put, del, get } from '@vercel/blob';
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
 
 export const RESERVED = new Set([
@@ -34,13 +34,15 @@ function token() {
 }
 
 export async function readJson(pathname, fallback = null) {
-  const prefix = pathname.replace(/^\//, '');
-  const { blobs } = await list({ prefix, limit: 20, token: token() });
-  const hit = blobs.find((b) => b.pathname === prefix);
-  if (!hit) return fallback;
-  const response = await fetch(hit.url);
-  if (!response.ok) return fallback;
-  return response.json();
+  const key = pathname.replace(/^\//, '');
+  try {
+    const result = await get(key, { access: 'private', token: token() });
+    if (!result?.stream) return fallback;
+    const text = await new Response(result.stream).text();
+    return JSON.parse(text);
+  } catch {
+    return fallback;
+  }
 }
 
 export async function writeJson(pathname, data) {
@@ -117,9 +119,8 @@ export async function allRemoteCats() {
   const cats = [];
   for (const blob of blobs) {
     if (!blob.pathname.endsWith('.json')) continue;
-    const response = await fetch(blob.url);
-    if (!response.ok) continue;
-    cats.push(await response.json());
+    const cat = await readJson(blob.pathname);
+    if (cat) cats.push(cat);
   }
   return cats;
 }
