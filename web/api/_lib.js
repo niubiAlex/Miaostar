@@ -44,9 +44,8 @@ export async function readJson(pathname, fallback = null) {
 }
 
 export async function writeJson(pathname, data) {
-  // Store was provisioned for public puts with this token; paths use unguessable ids.
   await put(pathname.replace(/^\//, ''), JSON.stringify(data), {
-    access: 'public',
+    access: 'private',
     addRandomSuffix: false,
     allowOverwrite: true,
     contentType: 'application/json',
