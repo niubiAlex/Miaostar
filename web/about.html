@@ -50,7 +50,7 @@
       import { ensureAuth, renderHeader } from '/src/site/store.js';
       await ensureAuth();
       renderHeader();
-      const credits = await fetch('/assets/sounds/credits.json?v=2').then((response) => response.json());
+      const credits = await fetch('/assets/sounds/credits.json?v=3').then((response) => response.json());
       const list = credits.map((item) => `<a href="${item.url}" rel="noopener">${item.file.replace('File:', '')}</a> — ${item.author}, ${item.license}`).join('<br />');
       document.getElementById('soundCreditsEn').innerHTML = `Cat and outdoor recordings from Wikimedia Commons, trimmed and level-matched (some pitch-shifted). Eating, scratching, ball and bell sounds are synthesized.<br />${list}`;
       document.getElementById('soundCreditsZh').innerHTML = `猫叫和屋外的声音来自维基共享资源，经过裁剪、音量统一（部分变了调）；吃饭、抓板、拍球和铃铛声是合成的。<br />${list}`;

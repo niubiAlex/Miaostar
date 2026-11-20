@@ -3,7 +3,7 @@
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=4';
 import { MEALS, MEALS_EN, ambientAt, dayKey, phaseAt, skyAt, weatherAt } from './schedule.js?v=7';
-import { createVoice } from './site/sound.js?v=2';
+import { createVoice } from './site/sound.js?v=3';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
 const STAGE = { width: 576, height: 720 };

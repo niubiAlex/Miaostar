@@ -37,7 +37,7 @@ function audio() {
   return context;
 }
 
-const loadManifest = () => (manifest ??= fetch(`${BASE}/voices.json?v=2`).then((response) => response.json()));
+const loadManifest = () => (manifest ??= fetch(`${BASE}/voices.json?v=3`).then((response) => response.json()));
 
 function buffer(path) {
   if (!buffers.has(path)) {
