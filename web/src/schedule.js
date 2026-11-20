@@ -15,7 +15,7 @@ const PHASES = {
   roam: { label: '夜里', text: '出门夜游去了', textEn: 'Out for a night stroll', out: true, weights: {} },
   // 免费档只有这两个。
   dayNap: { label: '白天', text: '在家睡觉', textEn: 'Sleeping at home', sleep: 'deep', weights: {} },
-  nightOut: { label: '晚上', text: '出去玩了，早上 7 点回来', textEn: 'Out playing, back at 7 am', out: true, weights: {} },
+  nightSleep: { label: '晚上', text: '睡着了', textEn: 'Asleep', sleep: 'deep', weights: {} },
 };
 
 // 从几点开始是哪个时段（按开始时间排好，最后一个一直到第二天第一个之前）。
@@ -48,7 +48,7 @@ export function dayKey(date) {
 export function phaseAt(tier, date) {
   const hour = date.getHours() + date.getMinutes() / 60;
   if (tier === 'free') {
-    const id = hour >= 7 && hour < 19 ? 'dayNap' : 'nightOut';
+    const id = hour >= 7 && hour < 19 ? 'dayNap' : 'nightSleep';
     return { id, ...PHASES[id] };
   }
   if (tier === '299') {

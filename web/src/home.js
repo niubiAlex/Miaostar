@@ -2,7 +2,7 @@
 // 平时它在屋里溜达：溜达片段里它是真的在画面里走一段（镜头不动，路线带弯），播完后网页把它的位置挪到终点。
 // 有目的地走（去中间、去门口）时沿地板的两个斜向走：原地踏步的走路片段，由网页按步幅平移。
 import { ClipPlayer } from './player.js?v=6';
-import { MEALS, MEALS_EN, ambientAt, dayKey, phaseAt, skyAt, weatherAt } from './schedule.js?v=7';
+import { MEALS, MEALS_EN, ambientAt, dayKey, phaseAt, skyAt, weatherAt } from './schedule.js?v=8';
 import { createVoice } from './site/sound.js?v=3';
 
 // 舞台的设计尺寸，下面的位置都按这个尺寸写。
