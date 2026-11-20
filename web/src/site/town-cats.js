@@ -100,7 +100,57 @@ function plazaPool(residents) {
   return pool;
 }
 
-export function startTownCats({ layer, rect, residents }) {
+// 有的安卓浏览器（比如一些手机自带的）放 WebM 时不认透明通道，猫会带着黑框。
+// 放一小段广场视频，画到画布上看角落是不是透明的；不透明就不放猫。Safari 用的是 HEVC，不用测。
+function alphaWorks(src) {
+  if (IS_SAFARI) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    const probe = document.createElement('video');
+    Object.assign(probe, { muted: true, playsInline: true, preload: 'auto', src });
+    const finish = (value) => {
+      clearTimeout(timer);
+      probe.removeAttribute('src');
+      probe.load();
+      resolve(value);
+    };
+    // 测不出来（比如网络慢）就当它支持，和原来一样放猫。
+    const timer = setTimeout(() => finish(true), 6000);
+    probe.addEventListener('loadeddata', () => {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 8;
+        canvas.height = 8;
+        const context = canvas.getContext('2d', { willReadFrequently: true });
+        context.drawImage(probe, 0, 0, 8, 8);
+        finish(context.getImageData(0, 0, 1, 1).data[3] < 200);
+      } catch {
+        finish(true);
+      }
+    }, { once: true });
+    probe.addEventListener('error', () => finish(false), { once: true });
+  });
+}
+
+export function startTownCats(options) {
+  let cats = null;
+  let paused = false;
+  const pool = plazaPool(options.residents);
+  if (pool.length > 0) {
+    alphaWorks(`${spriteOf(pool[0])}/sleep_idle${EXTENSION}`).then((works) => {
+      if (!works) return;
+      cats = runTownCats(options);
+      cats.setPaused(paused);
+    });
+  }
+  return {
+    setPaused(value) {
+      paused = value;
+      cats?.setPaused(value);
+    },
+  };
+}
+
+function runTownCats({ layer, rect, residents }) {
   const unit = rect[2] / 3840;
   const toWorld = ([x, y]) => [rect[0] + x * unit, rect[1] + y * unit];
   const size = SPRITE * unit;
@@ -170,6 +220,12 @@ export function startTownCats({ layer, rect, residents }) {
       await sleep(900);
       this.alive = false;
       cats.delete(this);
+      // iOS 不会因为元素被移走就释放视频解码的内存，要先清掉 src，不然猫来来去去几轮页面就崩了。
+      for (const element of this.flip.querySelectorAll('video')) {
+        element.pause();
+        element.removeAttribute('src');
+        element.load();
+      }
       this.element.remove();
     }
 

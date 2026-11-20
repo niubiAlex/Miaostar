@@ -1255,10 +1255,10 @@ textarea {
 
 .town-lights {
   position: absolute;
-  left: 0;
-  top: 0;
+  inset: 0;
   z-index: 2;
-  transform-origin: 0 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -1277,50 +1277,6 @@ textarea {
 
 .world-view[data-sky='night'] .town-lights {
   opacity: 1;
-}
-
-.world-view.moving .town-lights i,
-.world-view.dragging .town-lights i {
-  animation-play-state: paused;
-}
-
-.town-lights i {
-  position: absolute;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  mix-blend-mode: screen;
-}
-
-.window-light {
-  background: radial-gradient(closest-side, rgb(255 214 140 / 0.95), rgb(255 170 80 / 0.45) 45%, rgb(255 150 60 / 0) 100%);
-  opacity: var(--glow);
-  animation: window-flicker var(--flicker) ease-in-out infinite alternate;
-}
-
-.town-lights[data-late='1'] .window-light[data-off='0'],
-.town-lights[data-late='2'] .window-light:is([data-off='0'], [data-off='1']),
-.town-lights[data-late='3'] .window-light:is([data-off='0'], [data-off='1']),
-.town-lights[data-late='4'] .window-light:is([data-off='0'], [data-off='1'], [data-off='2']),
-.town-lights[data-late='5'] .window-light:is([data-off='0'], [data-off='1'], [data-off='2']) {
-  display: none;
-}
-
-.lamp-light {
-  width: 70px;
-  height: 70px;
-  background: radial-gradient(closest-side, rgb(255 246 210) 0 8%, rgb(255 214 140 / 0.7) 22%, rgb(255 190 100 / 0) 100%);
-}
-
-@keyframes window-flicker {
-  to {
-    opacity: calc(var(--glow) * 0.82);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .window-light {
-    animation: none;
-  }
 }
 
 /* Static pages carry both languages; only the active one shows. */
@@ -1362,7 +1318,7 @@ html:not([lang^='zh']) [data-lang='zh'] {
 }
 
 .world-layer.off {
-  visibility: hidden;
+  display: none;
 }
 
 /* 城镇的两层高清细节：和整张图上同一块对齐，刀口外是透明的。放大时淡入。 */
@@ -1375,7 +1331,7 @@ html:not([lang^='zh']) [data-lang='zh'] {
 
 .town-detail.off,
 .town-cats.off {
-  visibility: hidden;
+  display: none;
 }
 
 /* 小屋和地标的点击框铺在整座城镇上；镜头在飞、或者远到看不清时不能点。 */
@@ -2140,5 +2096,126 @@ html:not([lang^='zh']) [data-lang='zh'] {
     flex-wrap: wrap;
     align-items: center;
     padding-top: 14px;
+  }
+}
+
+/* 手机：页眉压成一行；首页进来就是城镇，说明卡片收成底部两个按钮，其余按钮挪到上面。 */
+@media (max-width: 720px) {
+  .site-header {
+    flex-wrap: nowrap;
+    min-height: 52px;
+    padding: 6px 12px;
+    gap: 10px;
+  }
+
+  .site-header .logo {
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+
+  .site-header .logo-en {
+    font-size: 18px;
+  }
+
+  .site-header nav {
+    width: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    gap: 12px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    font-size: 14px;
+  }
+
+  .site-header nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .site-header nav a,
+  .site-header .ghost-nav {
+    min-height: 40px;
+    white-space: nowrap;
+  }
+
+  .site-header button:not(.ghost-nav) {
+    min-height: 34px;
+    padding: 5px 12px;
+    white-space: nowrap;
+  }
+
+  .world-page .site-header nav a[href='/new'] {
+    display: none;
+  }
+
+  .world {
+    height: calc(100svh - 52px);
+  }
+
+  .world-panel {
+    top: auto;
+    bottom: 12px;
+    left: 12px;
+    right: 12px;
+    padding: 12px 14px;
+  }
+
+  .world-panel[data-place='plaza'] {
+    padding: 0;
+    background: none;
+    border: 0;
+    box-shadow: none;
+  }
+
+  .world-panel[data-place='plaza'] :is(h1, .brand-zh, .lead-line, .small) {
+    display: none;
+  }
+
+  .world-panel[data-place='plaza'] .actions {
+    flex-wrap: nowrap;
+    margin: 0;
+  }
+
+  .world-panel[data-place='plaza'] .actions .button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 15px;
+    box-shadow: var(--shadow-strong);
+  }
+
+  .world-panel[data-place='plaza'] .actions .button.ghost {
+    background: var(--paper-board);
+  }
+
+  .world-panel[data-place='house'] .actions {
+    margin: 0;
+  }
+
+  .world-panel[data-place='overview'] {
+    display: none;
+  }
+
+  .world-nav {
+    top: 10px;
+    bottom: auto;
+    left: auto;
+    right: 10px;
+    transform: none;
+  }
+
+  .world-nav a,
+  .world-nav button {
+    min-height: 34px;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .world-tip {
+    top: 56px;
+    bottom: auto;
+    width: max-content;
+    padding: 4px 8px 4px 14px;
+    font-size: 13px;
   }
 }

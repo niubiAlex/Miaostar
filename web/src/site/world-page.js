@@ -177,37 +177,74 @@ function landmarkSpots() {
 mountSpots(spotLayer, [...houseSpots(), ...landmarkSpots()]);
 
 // ---------- 夜里的灯：每间小屋的窗、广场上的路灯 ----------
-// 夜色是盖在整张画上的一层，灯要亮就得在它上面，所以单独一层，跟画布用同一个变换。
-const lightLayer = document.createElement('div');
-lightLayer.className = 'town-lights';
-lightLayer.setAttribute('aria-hidden', 'true');
-Object.assign(lightLayer.style, { width: `${WORLD_W}px`, height: `${WORLD_H}px` });
-view.append(lightLayer);
+// 夜色是盖在整个视口上的一层，灯要在它上面才亮。灯画在一块和视口一样大的画布上，每帧只画看得见的，
+// 不跟着城镇一起放大：放大后的大图层在 iOS 上很占内存，叠多了页面会崩。
+const lightCanvas = document.createElement('canvas');
+lightCanvas.className = 'town-lights';
+lightCanvas.setAttribute('aria-hidden', 'true');
+view.append(lightCanvas);
+const lightContext = lightCanvas.getContext('2d');
 // 路灯灯头在高清中心图上的像素位置。
 const LAMPS = [[1556, 860], [1627, 985], [2088, 814], [2236, 897], [2167, 1050], [1874, 1081], [1714, 1159]];
-// 每间房的亮度和熄灯时间固定（按房号算），刷新页面不会变；半夜以后陆续有人睡了。
+// 每间房的亮度、闪的快慢和熄灯时间固定（按房号算），刷新页面不会变。
 const seeded = (n) => {
   const x = Math.sin(n * 12.9898) * 43758.5453;
   return x - Math.floor(x);
 };
-lightLayer.innerHTML = [
-  ...houses.map(([x, y, w, h], index) => {
-    const style = `left:${x + w * 0.5}px;top:${y + h * 0.62}px;width:${w * 1.3}px;height:${h}px;`
-      + `--glow:${(0.65 + seeded(index + 1) * 0.35).toFixed(2)};--flicker:${(3 + seeded(index + 50) * 4).toFixed(1)}s`;
-    return `<i class="window-light" data-off="${Math.floor(seeded(index + 200) * 6)}" style="${style}"></i>`;
-  }),
+const LIGHTS = [
+  ...houses.map(([x, y, w, h], index) => ({
+    x: x + w * 0.5, y: y + h * 0.62, r: w * 0.65, squash: h / w * 0.75,
+    level: 0.65 + seeded(index + 1) * 0.35, speed: 0.8 + seeded(index + 50) * 1.2, phase: seeded(index + 90) * 6,
+    // 0 点以后每过一小时多熄一批，到 5 点大约一半睡了。
+    sleepsAt: Math.floor(seeded(index + 200) * 6), window: true,
+  })),
   ...LAMPS.map((point) => {
     const [x, y] = fromCenter(point);
-    return `<i class="lamp-light" style="left:${x}px;top:${y}px"></i>`;
+    return { x, y, r: 35, squash: 1, level: 1, window: false };
   }),
-].join('');
-// 0 点以后每过一小时，data-off 小于它的那些房子熄灯，到 5 点大约一半睡了。
-function applyLateNight() {
+];
+const WINDOW_STOPS = [[0, 'rgba(255, 214, 140, 0.95)'], [0.45, 'rgba(255, 170, 80, 0.45)'], [1, 'rgba(255, 150, 60, 0)']];
+const LAMP_STOPS = [[0, 'rgba(255, 246, 210, 1)'], [0.08, 'rgba(255, 246, 210, 1)'], [0.22, 'rgba(255, 214, 140, 0.7)'], [1, 'rgba(255, 190, 100, 0)']];
+const lightsOn = () => view.dataset.sky === 'dusk' || view.dataset.sky === 'night';
+
+function drawLights() {
+  if (!lightsOn()) return;
+  const { width, height } = viewSize();
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  if (lightCanvas.width !== Math.round(width * ratio) || lightCanvas.height !== Math.round(height * ratio)) {
+    lightCanvas.width = Math.round(width * ratio);
+    lightCanvas.height = Math.round(height * ratio);
+  }
+  const { x, y, z } = camera;
   const hour = townNow().getHours();
-  lightLayer.dataset.late = hour < 5 ? String(hour + 1) : '0';
+  const asleep = [0, 1, 2, 2, 3, 3][hour < 5 ? hour + 1 : 0];
+  const time = performance.now() / 1000;
+  lightContext.setTransform(ratio, 0, 0, ratio, 0, 0);
+  lightContext.clearRect(0, 0, width, height);
+  lightContext.globalCompositeOperation = 'lighter';
+  for (const light of LIGHTS) {
+    const r = light.r * z;
+    if (r < 1.5) continue;
+    const sx = width / 2 + (light.x - x) * z;
+    const sy = height / 2 + (light.y - y) * z;
+    if (sx < -r || sx > width + r || sy < -r || sy > height + r) continue;
+    if (light.window && light.sleepsAt < asleep) continue;
+    const flicker = light.window && !reducedMotion ? 0.91 + 0.09 * Math.sin(time * light.speed + light.phase) : 1;
+    lightContext.save();
+    lightContext.translate(sx, sy);
+    lightContext.scale(1, light.squash);
+    const gradient = lightContext.createRadialGradient(0, 0, 0, 0, 0, r);
+    for (const [stop, color] of light.window ? WINDOW_STOPS : LAMP_STOPS) gradient.addColorStop(stop, color);
+    lightContext.globalAlpha = light.level * flicker;
+    lightContext.fillStyle = gradient;
+    lightContext.fillRect(-r, -r, r * 2, r * 2);
+    lightContext.restore();
+  }
 }
-applyLateNight();
-setInterval(applyLateNight, 60_000);
+// 窗里的灯轻轻闪：只在亮灯的时候、每秒画几次。
+setInterval(() => {
+  if (lightsOn() && !document.hidden) drawLights();
+}, 150);
 
 // ---------- 广场上的猫 ----------
 const catLayer = document.createElement('div');
@@ -250,7 +287,7 @@ function render() {
   const { width, height } = viewSize();
   const { x, y, z } = camera;
   canvas.style.transform = `translate3d(${width / 2 - x * z}px, ${height / 2 - y * z}px, 0) scale(${z})`;
-  lightLayer.style.transform = canvas.style.transform;
+  drawLights();
   // 远处看不清城镇里的东西：高清层、小屋和猫在放大到城镇全景的一半时才淡入。
   const near = Math.min(Math.max((z / overviewZoom() - 0.3) / 0.3, 0), 1);
   canvas.style.setProperty('--detail', near);
@@ -400,7 +437,9 @@ function insets(target) {
       bottom: navHeight,
     };
   }
-  return { left: 0, right: 0, top: Math.min(box.bottom - outer.top + 8, height * 0.36), bottom: navHeight };
+  // 手机上：「看看整座城镇」这几个按钮在上面，说明和按钮在下面。
+  const covered = box.height > 0 ? outer.bottom - box.top + 8 : 16;
+  return { left: 0, right: 0, top: navHeight, bottom: Math.min(covered, height * 0.36) };
 }
 
 function cameraFor(target) {
