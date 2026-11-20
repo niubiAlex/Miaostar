@@ -65,10 +65,38 @@ function shrink(file) {
   });
 }
 
+function paintPhotos() {
+  const zh = lang() === 'zh';
+  document.getElementById('photoPreview').innerHTML = photos.map((src, index) => `<span class="photo-thumb">
+    <img src="${src}" alt="" />
+    <button type="button" data-remove="${index}" aria-label="${zh ? '去掉这张' : 'Remove'}">×</button>
+  </span>`).join('');
+  document.getElementById('photoCount').textContent = photos.length === 0
+    ? (zh ? '还没选照片' : 'No photos yet')
+    : zh ? `已选 ${photos.length} 张，最多 ${MAX_PHOTOS} 张` : `${photos.length} of ${MAX_PHOTOS} chosen`;
+}
+
+// 再选一次是往后加，不是替换；点缩略图上的 × 去掉一张。
 form.photos?.addEventListener('change', async () => {
-  photos = await Promise.all([...form.photos.files].slice(0, MAX_PHOTOS).map(shrink));
-  document.getElementById('photoPreview').innerHTML = photos.map((src) => `<img src="${src}" alt="" />`).join('');
+  const added = await Promise.all([...form.photos.files].slice(0, MAX_PHOTOS - photos.length).map(shrink));
+  photos = [...photos, ...added];
+  form.photos.value = '';
+  paintPhotos();
 });
+document.getElementById('photoPreview')?.addEventListener('click', (event) => {
+  const index = event.target.closest('[data-remove]')?.dataset.remove;
+  if (index === undefined) return;
+  photos.splice(Number(index), 1);
+  paintPhotos();
+});
+if (form.photos) paintPhotos();
+
+for (const input of form.querySelectorAll('input[type=date]')) {
+  const mark = () => input.classList.toggle('filled', Boolean(input.value));
+  input.addEventListener('input', mark);
+  input.addEventListener('change', mark);
+  mark();
+}
 
 let slugTouched = false;
 form.name?.addEventListener('input', () => {

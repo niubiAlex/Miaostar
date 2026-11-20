@@ -31,15 +31,21 @@
       </div>
 
       <form id="form" class="form" novalidate hidden>
-        <label>
+        <div class="field">
           <span><span data-lang="en">Photos (1–5)</span><span data-lang="zh">照片（1–5 张）</span></span>
-          <input type="file" name="photos" accept="image/*" multiple />
+          <div class="photo-picker">
+            <label class="button ghost">
+              <input type="file" name="photos" accept="image/*" multiple hidden />
+              <span data-lang="en">Choose photos</span><span data-lang="zh">选择照片</span>
+            </label>
+            <span id="photoCount" class="hint"></span>
+          </div>
           <span class="hint">
-            <span data-lang="en">Front, side, and full body if you can. We draw from them.</span>
-            <span data-lang="zh">正面、侧面、全身都有最好，我们照着它的样子画。</span>
+            <span data-lang="en">One clear shot of the face, and one of the whole body from the side so we can see the markings on the back and tail. Daylight without filters works best — we match the colors from these. Put the clearest two first.</span>
+            <span data-lang="zh">一张看清脸的正面照，一张从侧面拍到全身的（能看到背上和尾巴的花纹）。自然光、不加滤镜最好，颜色和花纹都照着照片来。最清楚的两张放在最前面。</span>
           </span>
           <div id="photoPreview" class="photos"></div>
-        </label>
+        </div>
 
         <div class="row">
           <label><span><span data-lang="en">Cat’s name</span><span data-lang="zh">猫的名字</span></span><input name="name" maxlength="12" placeholder="Momo" /></label>
@@ -56,9 +62,9 @@
         </label>
 
         <div class="row">
-          <label><span><span data-lang="en">Birthday (optional)</span><span data-lang="zh">生日（可不填）</span></span><input type="date" name="birthday" /></label>
-          <label><span><span data-lang="en">Came home (optional)</span><span data-lang="zh">来到家里（可不填）</span></span><input type="date" name="homeDay" /></label>
-          <label><span><span data-lang="en">Arrived on Cat Planet</span><span data-lang="zh">来到喵星的日子</span></span><input type="date" name="planetDay" /></label>
+          <label><span><span data-lang="en">Birthday (optional)</span><span data-lang="zh">生日（可不填）</span></span><span class="date-input"><input type="date" name="birthday" /><span class="date-placeholder" aria-hidden="true"><span data-lang="en">Pick a date</span><span data-lang="zh">选个日期</span></span></span></label>
+          <label><span><span data-lang="en">Came home (optional)</span><span data-lang="zh">来到家里（可不填）</span></span><span class="date-input"><input type="date" name="homeDay" /><span class="date-placeholder" aria-hidden="true"><span data-lang="en">Pick a date</span><span data-lang="zh">选个日期</span></span></span></label>
+          <label><span><span data-lang="en">Arrived on Cat Planet</span><span data-lang="zh">来到喵星的日子</span></span><span class="date-input"><input type="date" name="planetDay" /><span class="date-placeholder" aria-hidden="true"><span data-lang="en">Pick a date</span><span data-lang="zh">选个日期</span></span></span></label>
         </div>
 
         <label><span><span data-lang="en">Coat (optional)</span><span data-lang="zh">花色（可不填）</span></span><input name="coat" maxlength="20" placeholder="calico / 三花" /></label>
