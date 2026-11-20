@@ -35,8 +35,8 @@ function token() {
 
 export async function readJson(pathname, fallback = null) {
   const prefix = pathname.replace(/^\//, '');
-  const { blobs } = await list({ prefix, limit: 1, token: token() });
-  const hit = blobs.find((b) => b.pathname === prefix || b.pathname.endsWith(prefix));
+  const { blobs } = await list({ prefix, limit: 20, token: token() });
+  const hit = blobs.find((b) => b.pathname === prefix);
   if (!hit) return fallback;
   const response = await fetch(hit.url);
   if (!response.ok) return fallback;
@@ -56,7 +56,7 @@ export async function writeJson(pathname, data) {
 export async function remove(pathname) {
   const prefix = pathname.replace(/^\//, '');
   const { blobs } = await list({ prefix, limit: 5, token: token() });
-  const urls = blobs.filter((b) => b.pathname === prefix || b.pathname.startsWith(prefix)).map((b) => b.url);
+  const urls = blobs.filter((b) => b.pathname === prefix).map((b) => b.url);
   if (urls.length) await del(urls, { token: token() });
 }
 
@@ -82,15 +82,15 @@ export function emailKey(email) {
   return createHash('sha256').update(email.trim().toLowerCase()).digest('hex').slice(0, 32);
 }
 
-export function json(data, status = 200, headers = {}) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...headers },
-  });
+export function send(res, data, status = 200, headers = {}) {
+  for (const [key, value] of Object.entries(headers)) res.setHeader(key, value);
+  res.statusCode = status;
+  res.setHeader('content-type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(data));
 }
 
-export function parseCookies(request) {
-  const raw = request.headers.get('cookie') || '';
+export function parseCookies(req) {
+  const raw = req.headers.cookie || '';
   return Object.fromEntries(raw.split(';').map((part) => {
     const [key, ...rest] = part.trim().split('=');
     return [key, decodeURIComponent(rest.join('=') || '')];
@@ -102,8 +102,8 @@ export function sessionCookie(id, maxAge = 60 * 60 * 24 * 30) {
   return `catplanet_session=${id}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
 }
 
-export async function currentUser(request) {
-  const id = parseCookies(request).catplanet_session;
+export async function currentUser(req) {
+  const id = parseCookies(req).catplanet_session;
   if (!id) return null;
   const session = await readJson(`sessions/${id}.json`);
   if (!session?.userId) return null;
@@ -132,4 +132,15 @@ export async function slugExists(slug) {
   if (RESERVED.has(slug) || SAMPLE[slug]) return true;
   const cat = await readJson(`cats/${slug}.json`);
   return Boolean(cat);
+}
+
+export async function readBody(req) {
+  const chunks = [];
+  for await (const chunk of req) chunks.push(chunk);
+  if (!chunks.length) return {};
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    return {};
+  }
 }

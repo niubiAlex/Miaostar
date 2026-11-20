@@ -1,21 +1,19 @@
 import {
-  emailKey, hashPassword, json, readJson, sessionCookie, sessionId, writeJson,
+  emailKey, hashPassword, readBody, readJson, send, sessionCookie, sessionId, writeJson,
 } from '../_lib.js';
 
-export const config = { runtime: 'nodejs' };
-
-export default async function handler(request) {
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  const body = await request.json().catch(() => ({}));
+export default async function handler(req, res) {
+  if (req.method !== 'POST') return send(res, { error: 'Method not allowed' }, 405);
+  const body = await readBody(req);
   const email = String(body.email || '').trim().toLowerCase();
   const name = String(body.name || '').trim().slice(0, 32);
   const password = String(body.password || '');
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Invalid email' }, 400);
-  if (name.length < 1) return json({ error: 'Name required' }, 400);
-  if (password.length < 6) return json({ error: 'Password must be at least 6 characters' }, 400);
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return send(res, { error: 'Invalid email' }, 400);
+  if (name.length < 1) return send(res, { error: 'Name required' }, 400);
+  if (password.length < 6) return send(res, { error: 'Password must be at least 6 characters' }, 400);
 
   const id = emailKey(email);
-  if (await readJson(`users/${id}.json`)) return json({ error: 'Email already registered' }, 409);
+  if (await readJson(`users/${id}.json`)) return send(res, { error: 'Email already registered' }, 409);
 
   const { salt, hash } = hashPassword(password);
   const user = { id, email, name, salt, hash, createdAt: new Date().toISOString() };
@@ -23,5 +21,5 @@ export default async function handler(request) {
 
   const sid = sessionId();
   await writeJson(`sessions/${sid}.json`, { userId: id, createdAt: new Date().toISOString() });
-  return json({ user: { id, email, name } }, 201, { 'Set-Cookie': sessionCookie(sid) });
+  return send(res, { user: { id, email, name } }, 201, { 'Set-Cookie': sessionCookie(sid) });
 }

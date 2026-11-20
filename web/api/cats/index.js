@@ -1,27 +1,24 @@
 import {
-  RESERVED, allRemoteCats, currentUser, json, readJson, sampleCats, slugExists, writeJson,
+  RESERVED, allRemoteCats, currentUser, readBody, sampleCats, send, slugExists, writeJson,
 } from '../_lib.js';
 
-export const config = { runtime: 'nodejs' };
-
-export default async function handler(request) {
-  if (request.method === 'GET') {
+export default async function handler(req, res) {
+  if (req.method === 'GET') {
     const remote = await allRemoteCats();
-    const cats = [...remote, ...sampleCats()];
-    return json({ cats });
+    return send(res, { cats: [...remote, ...sampleCats()] });
   }
 
-  if (request.method !== 'POST') return json({ error: 'Method not allowed' }, 405);
-  const user = await currentUser(request);
-  if (!user) return json({ error: 'Please log in first' }, 401);
+  if (req.method !== 'POST') return send(res, { error: 'Method not allowed' }, 405);
+  const user = await currentUser(req);
+  if (!user) return send(res, { error: 'Please log in first' }, 401);
 
-  const body = await request.json().catch(() => ({}));
+  const body = await readBody(req);
   const slug = String(body.slug || '').trim().toLowerCase();
   const name = String(body.name || '').trim().slice(0, 32);
-  if (!name) return json({ error: 'Cat name required' }, 400);
-  if (!/^[a-z0-9-]{2,24}$/.test(slug)) return json({ error: 'Invalid address' }, 400);
-  if (RESERVED.has(slug)) return json({ error: 'Address reserved', taken: true }, 409);
-  if (await slugExists(slug)) return json({ error: 'Address already taken', taken: true }, 409);
+  if (!name) return send(res, { error: 'Cat name required' }, 400);
+  if (!/^[a-z0-9-]{2,24}$/.test(slug)) return send(res, { error: 'Invalid address' }, 400);
+  if (RESERVED.has(slug)) return send(res, { error: 'Address reserved', taken: true }, 409);
+  if (await slugExists(slug)) return send(res, { error: 'Address already taken', taken: true }, 409);
 
   const cat = {
     slug,
@@ -44,5 +41,5 @@ export default async function handler(request) {
     createdAt: new Date().toISOString(),
   };
   await writeJson(`cats/${slug}.json`, cat);
-  return json({ cat }, 201);
+  return send(res, { cat }, 201);
 }

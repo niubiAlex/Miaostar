@@ -1,9 +1,6 @@
-import { currentUser, json } from '../_lib.js';
+import { currentUser, send } from '../_lib.js';
 
-export const config = { runtime: 'nodejs' };
-
-export default async function handler(request) {
-  const user = await currentUser(request);
-  if (!user) return json({ user: null });
-  return json({ user });
+export default async function handler(req, res) {
+  const user = await currentUser(req);
+  return send(res, { user: user || null });
 }
